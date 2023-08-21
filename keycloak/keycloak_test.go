@@ -1,0 +1,29 @@
+package keycloak
+
+import (
+	"github.com/stretchr/testify/assert"
+	"os"
+	"testing"
+)
+
+func TestBuild(t *testing.T) {
+	t.Run("default values", func(t *testing.T) {
+		os.Clearenv()
+
+		l, err := Build()
+		assert.NoError(t, err)
+		assert.Equal(t, "", l.Host)
+		assert.Equal(t, "", l.Client)
+		assert.Equal(t, "", l.Secret)
+		assert.Equal(t, "", l.Realm)
+	})
+
+	t.Run("with values", func(t *testing.T) {
+		os.Clearenv()
+
+		_ = os.Setenv("KEYCLOAK_HOSTNAME", "http://localhost")
+		l, err := Build()
+		assert.NoError(t, err)
+		assert.Equal(t, "http://localhost", l.Host)
+	})
+}
