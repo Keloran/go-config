@@ -11,7 +11,7 @@ func TestBuild(t *testing.T) {
 	t.Run("default values", func(t *testing.T) {
 		os.Clearenv() // Clear all environment variables
 
-		cfg, err := Build(BuildLocal)
+		cfg, err := Build(Local)
 
 		assert.NoError(t, err)
 		// Check default values for Local
@@ -27,7 +27,7 @@ func TestBuild(t *testing.T) {
 		os.Setenv("DEVELOPMENT", "true")
 		os.Setenv("HTTP_PORT", "8080")
 
-		cfg, err := Build(BuildLocal)
+		cfg, err := Build(Local)
 
 		assert.NoError(t, err)
 		// Check custom values for Local

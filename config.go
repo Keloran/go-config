@@ -4,7 +4,9 @@ import (
 	"github.com/bugfixes/go-bugfixes/logs"
 	"github.com/caarlos0/env/v8"
 	"github.com/keloran/go-config/database"
+	"github.com/keloran/go-config/keycloak"
 	"github.com/keloran/go-config/local"
+	"github.com/keloran/go-config/mongo"
 	"github.com/keloran/go-config/vault"
 	vault_helper "github.com/keloran/vault-helper"
 )
@@ -13,11 +15,13 @@ type Config struct {
 	local.Local
 	vault.Vault
 	database.Database
+	keycloak.Keycloak
+	mongo.Mongo
 }
 
 type BuildOption func(*Config) error
 
-func BuildLocal(cfg *Config) error {
+func Local(cfg *Config) error {
 	l, err := local.Build()
 	if err != nil {
 		return logs.Errorf("build local: %v", err)
@@ -28,7 +32,7 @@ func BuildLocal(cfg *Config) error {
 	return nil
 }
 
-func BuildVault(cfg *Config) error {
+func Vault(cfg *Config) error {
 	v, err := vault.Build()
 	if err != nil {
 		return logs.Errorf("build vault: %v", err)
@@ -39,7 +43,7 @@ func BuildVault(cfg *Config) error {
 	return nil
 }
 
-func BuildDatabase(cfg *Config) error {
+func Database(cfg *Config) error {
 	vh := vault_helper.NewVault(cfg.Vault.Address, cfg.Vault.Token)
 
 	d, err := database.Build(database.Setup(cfg.Vault.Address, cfg.Vault.Token), vh)
@@ -48,6 +52,30 @@ func BuildDatabase(cfg *Config) error {
 	}
 
 	cfg.Database = *d
+
+	return nil
+}
+
+func Mongo(cfg *Config) error {
+	vh := vault_helper.NewVault(cfg.Vault.Address, cfg.Vault.Token)
+
+	m, err := mongo.Build(mongo.Setup(cfg.Vault.Address, cfg.Vault.Token), vh)
+	if err != nil {
+		return logs.Errorf("build mongo: %v", err)
+	}
+
+	cfg.Mongo = *m
+
+	return nil
+}
+
+func Keycloak(cfg *Config) error {
+	k, err := keycloak.Build()
+	if err != nil {
+		return logs.Errorf("build keycloak: %v", err)
+	}
+
+	cfg.Keycloak = *k
 
 	return nil
 }

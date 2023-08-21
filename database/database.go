@@ -6,12 +6,6 @@ import (
 	vault_helper "github.com/keloran/vault-helper"
 )
 
-type VaultHelper interface {
-	GetSecrets(path string) error
-	GetSecret(key string) (string, error)
-	Secrets() []vault_helper.KVSecret
-}
-
 type VaultDetails struct {
 	Address string
 	Path    string `env:"RDS_VAULT_PATH" envDefault:"secret/data/chewedfeed/postgres"`
@@ -35,7 +29,7 @@ func Setup(vaultAddress, vaultToken string) VaultDetails {
 	}
 }
 
-func Build(vd VaultDetails, vh VaultHelper) (*Database, error) {
+func Build(vd VaultDetails, vh vault_helper.VaultHelper) (*Database, error) {
 	rds := &Database{}
 	rds.VaultDetails = vd
 
