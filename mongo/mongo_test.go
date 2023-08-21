@@ -3,12 +3,13 @@ package mongo
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	vault_helper "github.com/keloran/vault-helper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"testing"
 )
 
 type MockVaultHelper struct {

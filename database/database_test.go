@@ -2,8 +2,9 @@ package database
 
 import (
 	"fmt"
-	vault_helper "github.com/keloran/vault-helper"
 	"testing"
+
+	vault_helper "github.com/keloran/vault-helper"
 )
 
 type MockVaultHelper struct {

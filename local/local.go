@@ -10,7 +10,7 @@ type Local struct {
 	KeepLocal   bool `env:"BUGFIXES_LOCAL_ONLY" envDefault:"false"`
 	Development bool `env:"DEVELOPMENT" envDefault:"false"`
 	HTTPPort    int  `env:"HTTP_PORT" envDefault:"80"`
-  GRPCPort    int  `env:"GRPC_PORT" envDefault:"3000"`
+	GRPCPort    int  `env:"GRPC_PORT" envDefault:"3000"`
 }
 
 func Build() (*Local, error) {

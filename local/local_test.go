@@ -17,7 +17,7 @@ func TestBuild(t *testing.T) {
 		assert.Equal(t, false, l.KeepLocal)
 		assert.Equal(t, false, l.Development)
 		assert.Equal(t, 80, l.HTTPPort)
-    assert.Equal(t, 3000, l.GRPCPort)
+		assert.Equal(t, 3000, l.GRPCPort)
 	})
 
 	t.Run("custom values", func(t *testing.T) {
@@ -25,7 +25,7 @@ func TestBuild(t *testing.T) {
 		_ = os.Setenv("BUGFIXES_LOCAL_ONLY", "true")
 		_ = os.Setenv("DEVELOPMENT", "true")
 		_ = os.Setenv("HTTP_PORT", "8080")
-    _ = os.Setenv("GRPC_PORT", "9999")
+		_ = os.Setenv("GRPC_PORT", "9999")
 
 		l, err := Build()
 
@@ -33,6 +33,6 @@ func TestBuild(t *testing.T) {
 		assert.Equal(t, true, l.KeepLocal)
 		assert.Equal(t, true, l.Development)
 		assert.Equal(t, 8080, l.HTTPPort)
-    assert.Equal(t, 9999, l.GRPCPort)
+		assert.Equal(t, 9999, l.GRPCPort)
 	})
 }

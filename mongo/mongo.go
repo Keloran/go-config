@@ -3,12 +3,13 @@ package mongo
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/bugfixes/go-bugfixes/logs"
 	"github.com/caarlos0/env/v8"
 	vault_helper "github.com/keloran/vault-helper"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"time"
 )
 
 type VaultDetails struct {
