@@ -1,0 +1,72 @@
+package database
+
+import (
+	"github.com/bugfixes/go-bugfixes/logs"
+	"github.com/caarlos0/env/v8"
+	vault_helper "github.com/keloran/vault-helper"
+)
+
+type VaultHelper interface {
+	GetSecrets(path string) error
+	GetSecret(key string) (string, error)
+	Secrets() []vault_helper.KVSecret
+}
+
+type VaultDetails struct {
+	Address string
+	Path    string `env:"RDS_VAULT_PATH" envDefault:"secret/data/chewedfeed/postgres"`
+	Token   string
+}
+
+type Database struct {
+	Host     string `env:"RDS_HOSTNAME" envDefault:"postgres.chewedfeed"`
+	Port     int    `env:"RDS_PORT" envDefault:"5432"`
+	User     string `env:"RDS_USERNAME"`
+	Password string `env:"RDS_PASSWORD"`
+	DBName   string `env:"RDS_DB" envDefault:"postgres"`
+
+	VaultDetails
+}
+
+func Setup(vaultAddress, vaultToken string) VaultDetails {
+	return VaultDetails{
+		Address: vaultAddress,
+		Token:   vaultToken,
+	}
+}
+
+func Build(vd VaultDetails, vh VaultHelper) (*Database, error) {
+	rds := &Database{}
+	rds.VaultDetails = vd
+
+	if err := env.Parse(rds); err != nil {
+		return rds, logs.Errorf("failed to parse database env: %v", err)
+	}
+
+	if rds.User != "" && rds.Password != "" {
+		return rds, logs.Error("no username or password for database")
+	}
+
+	if err := vh.GetSecrets(rds.VaultDetails.Path); err != nil {
+		return rds, logs.Errorf("failed to get secret: %v", err)
+	}
+
+	if vh.Secrets() == nil {
+		return rds, logs.Error("no database password found")
+	}
+
+	pass, err := vh.GetSecret("password")
+	if err != nil {
+		return rds, logs.Errorf("failed to get password: %v", err)
+	}
+
+	user, err := vh.GetSecret("username")
+	if err != nil {
+		return rds, logs.Errorf("failed to get username: %v", err)
+	}
+
+	rds.Password = pass
+	rds.User = user
+
+	return rds, nil
+}

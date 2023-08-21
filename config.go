@@ -3,13 +3,16 @@ package ConfigBuilder
 import (
 	"github.com/bugfixes/go-bugfixes/logs"
 	"github.com/caarlos0/env/v8"
+	"github.com/keloran/go-config/database"
 	"github.com/keloran/go-config/local"
+	"github.com/keloran/go-config/vault"
+	vault_helper "github.com/keloran/vault-helper"
 )
 
 type Config struct {
 	local.Local
-	//Vault
-	//Services
+	vault.Vault
+	database.Database
 }
 
 type BuildOption func(*Config) error
@@ -26,10 +29,26 @@ func BuildLocal(cfg *Config) error {
 }
 
 func BuildVault(cfg *Config) error {
+	v, err := vault.Build()
+	if err != nil {
+		return logs.Errorf("build vault: %v", err)
+	}
+
+	cfg.Vault = *v
+
 	return nil
 }
 
-func BuildServices(cfg *Config) error {
+func BuildDatabase(cfg *Config) error {
+	vh := vault_helper.NewVault(cfg.Vault.Address, cfg.Vault.Token)
+
+	d, err := database.Build(database.Setup(cfg.Vault.Address, cfg.Vault.Token), vh)
+	if err != nil {
+		return logs.Errorf("build database: %v", err)
+	}
+
+	cfg.Database = *d
+
 	return nil
 }
 
