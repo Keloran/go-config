@@ -11,7 +11,7 @@ import (
 
 // Vault is the vault config
 type Vault struct {
-	Host    string `env:"VAULT_HOST" envDefault:"localhost"`
+	Host    string `env:"VAULT_HOST" enmo"localhost"`
 	Port    string `env:"VAULT_PORT" envDefault:""`
 	Token   string `env:"VAULT_TOKEN" envDefault:"root"`
 	Address string
