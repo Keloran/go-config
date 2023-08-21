@@ -1,8 +1,13 @@
-package database
+package mongo
 
 import (
+	"context"
 	"fmt"
 	vault_helper "github.com/keloran/vault-helper"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"testing"
 )
 
@@ -32,6 +37,15 @@ func (m *MockVaultHelper) LeaseDuration() int {
 	return m.Lease
 }
 
+type MockMongoClient struct {
+	mock.Mock
+}
+
+func (m *MockMongoClient) Connect(ctx context.Context, opts ...*options.ClientOptions) (*mongo.Client, error) {
+	args := m.Called(ctx, opts)
+	return args.Get(0).(*mongo.Client), args.Error(1)
+}
+
 func TestBuild(t *testing.T) {
 	mockVault := &MockVaultHelper{
 		KVSecrets: []vault_helper.KVSecret{
@@ -40,17 +54,10 @@ func TestBuild(t *testing.T) {
 		},
 	}
 
-	vd := Setup("mockAddress", "mockToken")
-	db, err := Build(vd, mockVault)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	vd := Setup("testVaultAddress", "testVaultToken")
+	m, err := Build(vd, mockVault)
 
-	if db.Password != "testPassword" {
-		t.Errorf("expected password to be 'testPassword', got %s", db.Password)
-	}
-
-	if db.User != "testUser" {
-		t.Errorf("expected user to be 'testUser', got %s", db.User)
-	}
+	assert.NoError(t, err)
+	assert.Equal(t, "testUser", m.Username)
+	assert.Equal(t, "testPassword", m.Password)
 }

@@ -1,18 +1,15 @@
 package mongo
 
 import (
+	"context"
 	"fmt"
 	"github.com/bugfixes/go-bugfixes/logs"
 	"github.com/caarlos0/env/v8"
 	vault_helper "github.com/keloran/vault-helper"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"time"
 )
-
-type VaultHelper interface {
-	GetSecrets(path string) error
-	GetSecret(key string) (string, error)
-	Secrets() []vault_helper.KVSecret
-}
 
 type VaultDetails struct {
 	Address    string
@@ -30,6 +27,12 @@ type Mongo struct {
 	Collections struct {
 		List string `env:"MONGO_TODO_COLLECTION" envDefault:""`
 	}
+	VaultDetails
+	MongoClient
+}
+
+type MongoClient interface {
+	Connect(ctx context.Context, opts ...*options.ClientOptions) (*mongo.Client, error)
 }
 
 func Setup(vaultAddress, vaultToken string) VaultDetails {
@@ -39,43 +42,49 @@ func Setup(vaultAddress, vaultToken string) VaultDetails {
 	}
 }
 
-func Build(vd VaultDetails, vh VaultHelper) (*Mongo, error) {
+func Build(vd VaultDetails, vh vault_helper.VaultHelper) (*Mongo, error) {
 	mungo := &Mongo{}
+	mungo.VaultDetails = vd
 
 	if err := env.Parse(mungo); err != nil {
 		return nil, logs.Errorf("error parsing mongo: %v", err)
 	}
 
-	v := vh.NewVault(c.Vault.Address, c.Vault.Token)
-	if err := v.GetSecrets(mungo.Vault.Path); err != nil {
+	if err := vh.GetSecrets(mungo.VaultDetails.Path); err != nil {
 		return nil, logs.Errorf("error getting mongo secrets: %v", err)
 	}
 
-	username, err := v.GetSecret("username")
+	if vh.Secrets() == nil {
+		return nil, logs.Errorf("no secrets found")
+	}
+
+	username, err := vh.GetSecret("username")
 	if err != nil {
 		return nil, logs.Errorf("error getting username: %v", err)
 	}
 
-	password, err := v.GetSecret("password")
+	password, err := vh.GetSecret("password")
 	if err != nil {
 		return nil, logs.Errorf("error getting password: %v", err)
 	}
 
-	mungo.Vault.ExpireTime = time.Now().Add(time.Duration(v.LeaseDuration) * time.Second)
+	mungo.VaultDetails.ExpireTime = time.Now().Add(time.Duration(vh.LeaseDuration()) * time.Second)
 	mungo.Password = password
 	mungo.Username = username
 
 	return mungo, nil
 }
 
-func GetMongoClient(ctx context.Context, cfg Config) (*mongo.Client, error) {
-	if time.Now().Unix() > cfg.Mongo.Vault.ExpireTime.Unix() {
-		if err := BuildMongo(&cfg); err != nil {
+func GetMongoClient(ctx context.Context, m Mongo) (*mongo.Client, error) {
+	if time.Now().Unix() > m.VaultDetails.ExpireTime.Unix() {
+		mb, err := Build(m.VaultDetails, vault_helper.NewVault(m.VaultDetails.Address, m.VaultDetails.Token))
+		if err != nil {
 			return nil, logs.Errorf("error re-building mongo: %v", err)
 		}
+		m = *mb
 	}
 
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(fmt.Sprintf("mongodb://%s:%s@%s", cfg.Mongo.Username, cfg.Mongo.Password, cfg.Mongo.Host)))
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(fmt.Sprintf("mongodb://%s:%s@%s", m.Username, m.Password, m.Host)))
 	if err != nil {
 		return nil, logs.Errorf("error connecting to mongo: %v", err)
 	}
