@@ -3,6 +3,8 @@ package mongo
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/bugfixes/go-bugfixes/logs"
@@ -25,9 +27,8 @@ type Mongo struct {
 	Password string `env:"MONGO_PASS" envDefault:""`
 	Database string `env:"MONGO_DB" envDefault:""`
 
-	Collections struct {
-		List string `env:"MONGO_TODO_COLLECTION" envDefault:""`
-	}
+	Collections map[string]string
+
 	VaultDetails
 	MongoClient
 }
@@ -72,8 +73,29 @@ func Build(vd VaultDetails, vh vault_helper.VaultHelper) (*Mongo, error) {
 	mungo.VaultDetails.ExpireTime = time.Now().Add(time.Duration(vh.LeaseDuration()) * time.Second)
 	mungo.Password = password
 	mungo.Username = username
+	mungo.Collections = BuildCollections()
 
 	return mungo, nil
+}
+
+func BuildCollections() map[string]string {
+	col := make(map[string]string)
+	for _, e := range os.Environ() {
+		pair := strings.SplitN(e, "=", 2)
+		if len(pair) != 2 {
+			continue
+		}
+
+		key, val := pair[0], pair[1]
+		if !strings.HasPrefix(key, "MONGO_COLLECTION_") {
+			continue
+		}
+
+		colKey := strings.ToLower(strings.TrimPrefix(key, "MONGO_COLLECTION_"))
+		col[colKey] = val
+	}
+
+	return col
 }
 
 func GetMongoClient(ctx context.Context, m Mongo) (*mongo.Client, error) {
