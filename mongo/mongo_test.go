@@ -3,6 +3,7 @@ package mongo
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 
 	vault_helper "github.com/keloran/vault-helper"
@@ -61,4 +62,30 @@ func TestBuild(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "testUser", m.Username)
 	assert.Equal(t, "testPassword", m.Password)
+}
+
+func TestBuildCollections(t *testing.T) {
+	os.Clearenv() // Clear all environment variables
+	_ = os.Setenv("MONGO_COLLECTION_BOB", "bill")
+	_ = os.Setenv("MONGO_COLLECTION_ALICE", "wonderland")
+	_ = os.Setenv("MONGO_HOST", "localhost") // This should be ignored
+
+	collections := BuildCollections()
+
+	expected := map[string]string{
+		"bob":   "bill",
+		"alice": "wonderland",
+	}
+
+	assert.Equal(t, expected, collections, "Collections map did not match expected")
+}
+
+func TestBuildCollectionsNoMatch(t *testing.T) {
+	os.Clearenv() // Clear all environment variables
+	_ = os.Setenv("MONGO_HOST", "localhost")
+	_ = os.Setenv("MONGO_USER", "user")
+
+	collections := BuildCollections()
+
+	assert.Empty(t, collections, "Expected Collections map to be empty")
 }
