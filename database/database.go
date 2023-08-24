@@ -22,6 +22,16 @@ type Database struct {
 	VaultDetails
 }
 
+func NewDatabase(host, user, password, database string, port int) *Database {
+  return &Database {
+    Host: host,
+    Port: port,
+    User: user,
+    Password: password,
+    DBName: database,
+  }
+}
+
 func Setup(vaultAddress, vaultToken string) VaultDetails {
 	return VaultDetails{
 		Address: vaultAddress,

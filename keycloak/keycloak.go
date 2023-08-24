@@ -12,6 +12,15 @@ type Keycloak struct {
 	Host   string `env:"KEYCLOAK_HOSTNAME" envDefault:"" json:"host,omitempty"`
 }
 
+func NewKeycloak(client, secret, realm, host string) *Keycloak {
+  return &Keycloak{
+    Client: client,
+    Secret: secret,
+    Realm: realm,
+    Host: host,
+  }
+}
+
 func Build() (*Keycloak, error) {
 	k := &Keycloak{}
 	if err := env.Parse(k); err != nil {

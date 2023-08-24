@@ -37,6 +37,15 @@ type MongoClient interface {
 	Connect(ctx context.Context, opts ...*options.ClientOptions) (*mongo.Client, error)
 }
 
+func NewMongo(host, username, password, database string) *Mongo {
+  return &Mongo{
+    Host: host,
+    Username: username,
+    Password: password,
+    Database: database,
+  }
+}
+
 func Setup(vaultAddress, vaultToken string) VaultDetails {
 	return VaultDetails{
 		Address: vaultAddress,
