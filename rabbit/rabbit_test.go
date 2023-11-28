@@ -22,7 +22,9 @@ func TestBuild(t *testing.T) {
 
 	t.Run("with values", func(t *testing.T) {
 		os.Clearenv()
-		_ = os.Setenv("RABBIT_HOSTNAME", "http://localhost")
+		if err := os.Setenv("RABBIT_HOSTNAME", "http://localhost"); err != nil {
+			assert.NoError(t, err)
+		}
 		r, err := Build()
 		assert.NoError(t, err)
 		assert.Equal(t, "http://localhost", r.Host)

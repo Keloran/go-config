@@ -58,7 +58,6 @@ func TestBuild(t *testing.T) {
 
 	vd := Setup("testVaultAddress", "testVaultToken")
 	m, err := Build(vd, mockVault)
-
 	assert.NoError(t, err)
 	assert.Equal(t, "testUser", m.Username)
 	assert.Equal(t, "testPassword", m.Password)
@@ -66,9 +65,15 @@ func TestBuild(t *testing.T) {
 
 func TestBuildCollections(t *testing.T) {
 	os.Clearenv() // Clear all environment variables
-	_ = os.Setenv("MONGO_COLLECTION_BOB", "bill")
-	_ = os.Setenv("MONGO_COLLECTION_ALICE", "wonderland")
-	_ = os.Setenv("MONGO_HOST", "localhost") // This should be ignored
+	if err := os.Setenv("MONGO_COLLECTION_BOB", "bill"); err != nil {
+		assert.NoError(t, err)
+	}
+	if err := os.Setenv("MONGO_COLLECTION_ALICE", "wonderland"); err != nil {
+		assert.NoError(t, err)
+	}
+	if err := os.Setenv("MONGO_HOST", "localhost"); err != nil {
+		assert.NoError(t, err)
+	}
 
 	collections := BuildCollections()
 
@@ -82,8 +87,12 @@ func TestBuildCollections(t *testing.T) {
 
 func TestBuildCollectionsNoMatch(t *testing.T) {
 	os.Clearenv() // Clear all environment variables
-	_ = os.Setenv("MONGO_HOST", "localhost")
-	_ = os.Setenv("MONGO_USER", "user")
+	if err := os.Setenv("MONGO_HOST", "localhost"); err != nil {
+		assert.NoError(t, err)
+	}
+	if err := os.Setenv("MONGO_USER", "user"); err != nil {
+		assert.NoError(t, err)
+	}
 
 	collections := BuildCollections()
 

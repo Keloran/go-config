@@ -7,6 +7,7 @@ import (
 	"github.com/keloran/go-config/keycloak"
 	"github.com/keloran/go-config/local"
 	"github.com/keloran/go-config/mongo"
+	"github.com/keloran/go-config/rabbit"
 	"github.com/keloran/go-config/vault"
 	vault_helper "github.com/keloran/vault-helper"
 )
@@ -17,6 +18,7 @@ type Config struct {
 	database.Database
 	keycloak.Keycloak
 	mongo.Mongo
+	rabbit.Rabbit
 }
 
 type BuildOption func(*Config) error
@@ -76,6 +78,16 @@ func Keycloak(cfg *Config) error {
 	}
 
 	cfg.Keycloak = *k
+
+	return nil
+}
+
+func Rabbit(cfg *Config) error {
+	r, err := rabbit.Build()
+	if err != nil {
+		return logs.Errorf("build rabbit: %v", err)
+	}
+	cfg.Rabbit = *r
 
 	return nil
 }
