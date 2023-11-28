@@ -17,6 +17,7 @@ func TestBuild(t *testing.T) {
 		assert.Equal(t, "", l.Username)
 		assert.Equal(t, "", l.Password)
 		assert.Equal(t, "", l.VHost)
+		assert.Equal(t, "", l.ManagementHost)
 	})
 
 	t.Run("with values", func(t *testing.T) {
