@@ -3,7 +3,7 @@ package rabbit
 import (
 	"github.com/bugfixes/go-bugfixes/logs"
 	"github.com/caarlos0/env/v8"
-	vault_helper "github.com/keloran/vault-helper"
+	vaulthelper "github.com/keloran/vault-helper"
 )
 
 type VaultDetails struct {
@@ -39,7 +39,7 @@ func Setup(vaultAddress, vaultToken string) VaultDetails {
 	}
 }
 
-func Build(vd VaultDetails, vh vault_helper.VaultHelper) (*Rabbit, error) {
+func Build(vd VaultDetails, vh vaulthelper.VaultHelper) (*Rabbit, error) {
 	r := NewRabbit(0, "", "", "", "", "")
 
 	if err := env.Parse(r); err != nil {

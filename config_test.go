@@ -15,6 +15,10 @@ type MockVaultHelper struct {
 }
 
 func (m *MockVaultHelper) GetSecrets(path string) error {
+	if path == "" {
+		return nil
+	}
+
 	return nil // or simulate an error if needed
 }
 
