@@ -22,7 +22,9 @@ func TestBuild(t *testing.T) {
 	t.Run("with values", func(t *testing.T) {
 		os.Clearenv()
 
-		_ = os.Setenv("KEYCLOAK_HOSTNAME", "http://localhost")
+		if err := os.Setenv("KEYCLOAK_HOSTNAME", "http://localhost"); err != nil {
+			assert.NoError(t, err)
+		}
 		l, err := Build()
 		assert.NoError(t, err)
 		assert.Equal(t, "http://localhost", l.Host)

@@ -13,16 +13,16 @@ type Keycloak struct {
 }
 
 func NewKeycloak(client, secret, realm, host string) *Keycloak {
-  return &Keycloak{
-    Client: client,
-    Secret: secret,
-    Realm: realm,
-    Host: host,
-  }
+	return &Keycloak{
+		Client: client,
+		Secret: secret,
+		Realm:  realm,
+		Host:   host,
+	}
 }
 
 func Build() (*Keycloak, error) {
-	k := &Keycloak{}
+	k := NewKeycloak("", "", "", "")
 	if err := env.Parse(k); err != nil {
 		return nil, logs.Errorf("keycloak: unable to parse keycloak: %v", err)
 	}

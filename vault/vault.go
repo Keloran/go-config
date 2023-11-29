@@ -18,15 +18,15 @@ type Vault struct {
 }
 
 func NewVault(address, token string) *Vault {
-  return &Vault{
-    Address: address,
-    Token: token,
-  }
+	return &Vault{
+		Address: address,
+		Token:   token,
+	}
 }
 
 // BuildVault builds the vault config
 func Build() (*Vault, error) {
-	v := &Vault{}
+	v := NewVault("", "")
 
 	if err := env.Parse(v); err != nil {
 		return v, logs.Errorf("vault: %v", err)

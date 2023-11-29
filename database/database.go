@@ -23,13 +23,13 @@ type Database struct {
 }
 
 func NewDatabase(host, user, password, database string, port int) *Database {
-  return &Database {
-    Host: host,
-    Port: port,
-    User: user,
-    Password: password,
-    DBName: database,
-  }
+	return &Database{
+		Host:     host,
+		Port:     port,
+		User:     user,
+		Password: password,
+		DBName:   database,
+	}
 }
 
 func Setup(vaultAddress, vaultToken string) VaultDetails {
@@ -40,13 +40,14 @@ func Setup(vaultAddress, vaultToken string) VaultDetails {
 }
 
 func Build(vd VaultDetails, vh vault_helper.VaultHelper) (*Database, error) {
-	rds := &Database{}
+	rds := NewDatabase("", "", "", "", 0)
 	rds.VaultDetails = vd
 
 	if err := env.Parse(rds); err != nil {
 		return rds, logs.Errorf("failed to parse database env: %v", err)
 	}
 
+	// env rather than vault
 	if rds.User != "" && rds.Password != "" {
 		return rds, logs.Error("no username or password for database")
 	}

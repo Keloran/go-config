@@ -7,16 +7,20 @@ import (
 	"github.com/keloran/go-config/keycloak"
 	"github.com/keloran/go-config/local"
 	"github.com/keloran/go-config/mongo"
+	"github.com/keloran/go-config/rabbit"
 	"github.com/keloran/go-config/vault"
 	vault_helper "github.com/keloran/vault-helper"
 )
 
 type Config struct {
+	vaultHelper vault_helper.VaultHelper
+
 	local.Local
 	vault.Vault
 	database.Database
 	keycloak.Keycloak
 	mongo.Mongo
+	rabbit.Rabbit
 }
 
 type BuildOption func(*Config) error
@@ -44,7 +48,10 @@ func Vault(cfg *Config) error {
 }
 
 func Database(cfg *Config) error {
-	vh := vault_helper.NewVault(cfg.Vault.Address, cfg.Vault.Token)
+	vh := cfg.vaultHelper
+	if vh == nil {
+		vh = vault_helper.NewVault(cfg.Vault.Address, cfg.Vault.Token)
+	}
 
 	d, err := database.Build(database.Setup(cfg.Vault.Address, cfg.Vault.Token), vh)
 	if err != nil {
@@ -57,7 +64,10 @@ func Database(cfg *Config) error {
 }
 
 func Mongo(cfg *Config) error {
-	vh := vault_helper.NewVault(cfg.Vault.Address, cfg.Vault.Token)
+	vh := cfg.vaultHelper
+	if vh == nil {
+		vh = vault_helper.NewVault(cfg.Vault.Address, cfg.Vault.Token)
+	}
 
 	m, err := mongo.Build(mongo.Setup(cfg.Vault.Address, cfg.Vault.Token), vh)
 	if err != nil {
@@ -80,18 +90,51 @@ func Keycloak(cfg *Config) error {
 	return nil
 }
 
-func Build(opts ...BuildOption) (*Config, error) {
-	cfg := &Config{}
-
-	for _, opt := range opts {
-		if err := opt(cfg); err != nil {
-			return nil, logs.Errorf("build configOptions: %v", err)
-		}
+func Rabbit(cfg *Config) error {
+	vh := cfg.vaultHelper
+	if vh == nil {
+		vh = vault_helper.NewVault(cfg.Vault.Address, cfg.Vault.Token)
 	}
 
-	if err := env.Parse(cfg); err != nil {
-		return nil, logs.Errorf("parse config: %v", err)
+	r, err := rabbit.Build(rabbit.Setup(cfg.Vault.Address, cfg.Vault.Token), vh)
+	if err != nil {
+		return logs.Errorf("build rabbit: %v", err)
+	}
+	cfg.Rabbit = *r
+
+	return nil
+}
+
+func Build(opts ...BuildOption) (*Config, error) {
+	cfg := &Config{}
+	if err := cfg.Build(opts...); err != nil {
+		return nil, logs.Errorf("build config: %v", err)
 	}
 
 	return cfg, nil
+}
+
+func BuildLocal(mockVault vault_helper.VaultHelper, opts ...BuildOption) (*Config, error) {
+	cfg := &Config{}
+
+	cfg.vaultHelper = mockVault
+	if err := cfg.Build(opts...); err != nil {
+		return nil, logs.Errorf("build config: %v", err)
+	}
+
+	return cfg, nil
+}
+
+func (c *Config) Build(opts ...BuildOption) error {
+	for _, opt := range opts {
+		if err := opt(c); err != nil {
+			return logs.Errorf("build configOptions: %v", err)
+		}
+	}
+
+	if err := env.Parse(c); err != nil {
+		return logs.Errorf("parse config: %v", err)
+	}
+
+	return nil
 }
