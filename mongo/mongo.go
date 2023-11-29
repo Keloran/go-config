@@ -38,12 +38,12 @@ type MongoClient interface {
 }
 
 func NewMongo(host, username, password, database string) *Mongo {
-  return &Mongo{
-    Host: host,
-    Username: username,
-    Password: password,
-    Database: database,
-  }
+	return &Mongo{
+		Host:     host,
+		Username: username,
+		Password: password,
+		Database: database,
+	}
 }
 
 func Setup(vaultAddress, vaultToken string) VaultDetails {
@@ -54,11 +54,16 @@ func Setup(vaultAddress, vaultToken string) VaultDetails {
 }
 
 func Build(vd VaultDetails, vh vault_helper.VaultHelper) (*Mongo, error) {
-	mungo := &Mongo{}
+	mungo := NewMongo("", "", "", "")
 	mungo.VaultDetails = vd
 
 	if err := env.Parse(mungo); err != nil {
 		return nil, logs.Errorf("error parsing mongo: %v", err)
+	}
+
+	// env rather than vault
+	if mungo.Username != "" && mungo.Password != "" {
+		return mungo, nil
 	}
 
 	if err := vh.GetSecrets(mungo.VaultDetails.Path); err != nil {
