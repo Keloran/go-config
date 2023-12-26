@@ -2,7 +2,6 @@ package ConfigBuilder
 
 import (
 	"github.com/bugfixes/go-bugfixes/logs"
-	"github.com/caarlos0/env/v8"
 	"github.com/keloran/go-config/database"
 	"github.com/keloran/go-config/keycloak"
 	"github.com/keloran/go-config/local"
@@ -130,10 +129,6 @@ func (c *Config) Build(opts ...BuildOption) error {
 		if err := opt(c); err != nil {
 			return logs.Errorf("build configOptions: %v", err)
 		}
-	}
-
-	if err := env.Parse(c); err != nil {
-		return logs.Errorf("parse config: %v", err)
 	}
 
 	return nil
