@@ -2,9 +2,10 @@ package ConfigBuilder
 
 import (
 	"fmt"
-	vaulthelper "github.com/keloran/vault-helper"
 	"os"
 	"testing"
+
+	vaulthelper "github.com/keloran/vault-helper"
 
 	"github.com/stretchr/testify/assert"
 )

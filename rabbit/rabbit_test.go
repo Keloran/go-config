@@ -2,10 +2,11 @@ package rabbit
 
 import (
 	"fmt"
-	vaulthelper "github.com/keloran/vault-helper"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+
+	vaulthelper "github.com/keloran/vault-helper"
+	"github.com/stretchr/testify/assert"
 )
 
 type MockVaultHelper struct {
