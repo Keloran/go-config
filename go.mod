@@ -3,7 +3,7 @@ module github.com/keloran/go-config
 go 1.21
 
 require (
-	github.com/bugfixes/go-bugfixes v0.9.8
+	github.com/bugfixes/go-bugfixes v0.10.0
 	github.com/caarlos0/env/v8 v8.0.0
 	github.com/keloran/vault-helper v0.8.2
 	github.com/stretchr/testify v1.8.4
