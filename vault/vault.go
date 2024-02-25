@@ -3,6 +3,7 @@ package vault
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/bugfixes/go-bugfixes/logs"
 
@@ -11,10 +12,11 @@ import (
 
 // Vault is the vault config
 type Vault struct {
-	Host    string `env:"VAULT_HOST" envDefault:"localhost"`
-	Port    string `env:"VAULT_PORT" envDefault:""`
-	Token   string `env:"VAULT_TOKEN" envDefault:"root"`
-	Address string
+	Host       string `env:"VAULT_HOST" envDefault:"localhost"`
+	Port       string `env:"VAULT_PORT" envDefault:""`
+	Token      string `env:"VAULT_TOKEN" envDefault:"root"`
+	Address    string
+	ExpireTime time.Time
 }
 
 func NewVault(address, token string) *Vault {

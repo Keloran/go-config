@@ -4,12 +4,14 @@ import (
 	"github.com/bugfixes/go-bugfixes/logs"
 	"github.com/caarlos0/env/v8"
 	vault_helper "github.com/keloran/vault-helper"
+	"time"
 )
 
 type VaultDetails struct {
-	Address string
-	Path    string `env:"RDS_VAULT_PATH" envDefault:"secret/data/chewedfeed/postgres"`
-	Token   string
+	Address    string
+	Path       string `env:"RDS_VAULT_PATH" envDefault:"secret/data/chewedfeed/postgres"`
+	Token      string
+	ExpireTime time.Time
 }
 
 type Database struct {

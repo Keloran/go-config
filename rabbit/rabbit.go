@@ -1,15 +1,20 @@
 package rabbit
 
 import (
+	"context"
+	"fmt"
 	"github.com/bugfixes/go-bugfixes/logs"
 	"github.com/caarlos0/env/v8"
 	vaulthelper "github.com/keloran/vault-helper"
+	"net/http"
+	"time"
 )
 
 type VaultDetails struct {
-	Address string
-	Path    string `env:"RABBIT_VAULT_PATH" envDefault:"secret/data/chewedfeed/rabbitmq"`
-	Token   string
+	Address    string
+	Path       string `env:"RABBIT_VAULT_PATH" envDefault:"secret/data/chewedfeed/rabbitmq"`
+	Token      string
+	ExpireTime time.Time
 }
 
 type Rabbit struct {
@@ -19,6 +24,9 @@ type Rabbit struct {
 	Username       string `env:"RABBIT_USERNAME" envDefault:"" json:"username,omitempty"`
 	Password       string `env:"RABBIT_PASSWORD" envDefault:"" json:"password,omitempty"`
 	VHost          string `env:"RABBIT_VHOST" envDefault:"" json:"vhost,omitempty"`
+	Queue          string `env:"RABBIT_QUEUE" envDefault:"" json:"queue,omitempty"`
+
+	VaultDetails
 }
 
 func NewRabbit(port int, host, username, password, vhost, management string) *Rabbit {
@@ -73,5 +81,43 @@ func Build(vd VaultDetails, vh vaulthelper.VaultHelper) (*Rabbit, error) {
 		return nil, logs.Errorf("rabbit: unable to get vhost: %v", err)
 	}
 
+	r.VaultDetails.ExpireTime = time.Now().Add(time.Duration(vh.LeaseDuration()) * time.Second)
+
 	return r, nil
+}
+
+func GetRabbitQueue(ctx context.Context, r Rabbit) (interface{}, error) {
+	if time.Now().Unix() > r.VaultDetails.ExpireTime.Unix() {
+		rb, err := Build(r.VaultDetails, vaulthelper.NewVault(r.VaultDetails.Address, r.VaultDetails.Token))
+		if err != nil {
+			return nil, logs.Errorf("rabbit: unable to build rabbit: %v", err)
+		}
+		r = *rb
+	}
+
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/api/queues/%s/%s/get", r.Host, r.VHost, r.Queue), nil)
+	if err != nil {
+		return nil, logs.Errorf("rabbit: unable to create request: %v", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	req.SetBasicAuth(r.Username, r.Password)
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, logs.Errorf("rabbit: unable to get queue: %v", err)
+	}
+
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			_ = logs.Errorf("rabbit: unable to close response: %v", err)
+		}
+	}()
+
+	if res.StatusCode != 200 {
+		return nil, logs.Errorf("rabbit: unable to get queue: %v", res.Status)
+	}
+
+	return res, nil
 }
