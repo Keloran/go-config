@@ -8,7 +8,7 @@ import (
 
 	"github.com/bugfixes/go-bugfixes/logs"
 	"github.com/caarlos0/env/v8"
-	vault_helper "github.com/keloran/vault-helper"
+	vaultHelper "github.com/keloran/vault-helper"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -29,10 +29,10 @@ type Mongo struct {
 	Collections map[string]string
 
 	VaultDetails
-	MongoClient
+	MongoClient MungoClient
 }
 
-type MongoClient interface {
+type MungoClient interface {
 	Connect(ctx context.Context, opts ...*options.ClientOptions) (*mongo.Client, error)
 }
 
@@ -52,7 +52,7 @@ func Setup(vaultAddress, vaultToken string) VaultDetails {
 	}
 }
 
-func Build(vd VaultDetails, vh vault_helper.VaultHelper) (*Mongo, error) {
+func Build(vd VaultDetails, vh vaultHelper.VaultHelper) (*Mongo, error) {
 	mungo := NewMongo("", "", "", "")
 	mungo.VaultDetails = vd
 

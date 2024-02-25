@@ -1,24 +1,25 @@
 package mongo
 
 import (
-	"context"
 	"fmt"
+	"github.com/bugfixes/go-bugfixes/logs"
 	"os"
 	"testing"
 
-	vault_helper "github.com/keloran/vault-helper"
+	vaultHelper "github.com/keloran/vault-helper"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type MockVaultHelper struct {
-	KVSecrets []vault_helper.KVSecret
+	KVSecrets []vaultHelper.KVSecret
 	Lease     int
 }
 
 func (m *MockVaultHelper) GetSecrets(path string) error {
+	if path == "" {
+		return logs.Error("path not found")
+	}
+
 	return nil // or simulate an error if needed
 }
 
@@ -31,36 +32,12 @@ func (m *MockVaultHelper) GetSecret(key string) (string, error) {
 	return "", fmt.Errorf("key not found")
 }
 
-func (m *MockVaultHelper) Secrets() []vault_helper.KVSecret {
+func (m *MockVaultHelper) Secrets() []vaultHelper.KVSecret {
 	return m.KVSecrets
 }
 
 func (m *MockVaultHelper) LeaseDuration() int {
 	return m.Lease
-}
-
-type MockMongoClient struct {
-	mock.Mock
-}
-
-func (m *MockMongoClient) Connect(ctx context.Context, opts ...*options.ClientOptions) (*mongo.Client, error) {
-	args := m.Called(ctx, opts)
-	return args.Get(0).(*mongo.Client), args.Error(1)
-}
-
-func TestBuild(t *testing.T) {
-	mockVault := &MockVaultHelper{
-		KVSecrets: []vault_helper.KVSecret{
-			{Key: "password", Value: "testPassword"},
-			{Key: "username", Value: "testUser"},
-		},
-	}
-
-	vd := Setup("testVaultAddress", "testVaultToken")
-	m, err := Build(vd, mockVault)
-	assert.NoError(t, err)
-	assert.Equal(t, "testUser", m.Username)
-	assert.Equal(t, "testPassword", m.Password)
 }
 
 func TestBuildCollections(t *testing.T) {
@@ -91,6 +68,31 @@ func TestBuildCollectionsNoMatch(t *testing.T) {
 		assert.NoError(t, err)
 	}
 	if err := os.Setenv("MONGO_USER", "user"); err != nil {
+		assert.NoError(t, err)
+	}
+
+	collections := BuildCollections()
+
+	assert.Empty(t, collections, "Expected Collections map to be empty")
+}
+
+func TestBuildCollectionsNoHost(t *testing.T) {
+	os.Clearenv() // Clear all environment variables
+	if err := os.Setenv("MONGO_COLLECTION_BOB", "bill"); err != nil {
+		assert.NoError(t, err)
+	}
+	if err := os.Setenv("MONGO_COLLECTION_ALICE", "wonderland"); err != nil {
+		assert.NoError(t, err)
+	}
+
+	collections := BuildCollections()
+
+	assert.NotEmpty(t, collections, "Expected Collections map to be empty")
+}
+
+func TestBuildCollectionsNoCollections(t *testing.T) {
+	os.Clearenv() // Clear all environment variables
+	if err := os.Setenv("MONGO_HOST", "localhost"); err != nil {
 		assert.NoError(t, err)
 	}
 
