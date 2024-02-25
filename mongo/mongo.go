@@ -2,7 +2,6 @@ package mongo
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -110,21 +109,4 @@ func BuildCollections() map[string]string {
 	}
 
 	return col
-}
-
-func GetMongoClient(ctx context.Context, m Mongo) (*mongo.Client, error) {
-	if time.Now().Unix() > m.VaultDetails.ExpireTime.Unix() {
-		mb, err := Build(m.VaultDetails, vault_helper.NewVault(m.VaultDetails.Address, m.VaultDetails.Token))
-		if err != nil {
-			return nil, logs.Errorf("error re-building mongo: %v", err)
-		}
-		m = *mb
-	}
-
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(fmt.Sprintf("mongodb://%s:%s@%s", m.Username, m.Password, m.Host)))
-	if err != nil {
-		return nil, logs.Errorf("error connecting to mongo: %v", err)
-	}
-
-	return client, nil
 }
