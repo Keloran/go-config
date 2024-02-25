@@ -4,15 +4,19 @@ import (
 	"fmt"
 	"testing"
 
-	vault_helper "github.com/keloran/vault-helper"
+	vaultHelper "github.com/keloran/vault-helper"
 )
 
 type MockVaultHelper struct {
-	KVSecrets []vault_helper.KVSecret
+	KVSecrets []vaultHelper.KVSecret
 	Lease     int
 }
 
 func (m *MockVaultHelper) GetSecrets(path string) error {
+	if path == "" {
+		return fmt.Errorf("path not found")
+	}
+
 	return nil // or simulate an error if needed
 }
 
@@ -25,7 +29,7 @@ func (m *MockVaultHelper) GetSecret(key string) (string, error) {
 	return "", fmt.Errorf("key not found")
 }
 
-func (m *MockVaultHelper) Secrets() []vault_helper.KVSecret {
+func (m *MockVaultHelper) Secrets() []vaultHelper.KVSecret {
 	return m.KVSecrets
 }
 
@@ -35,7 +39,7 @@ func (m *MockVaultHelper) LeaseDuration() int {
 
 func TestBuild(t *testing.T) {
 	mockVault := &MockVaultHelper{
-		KVSecrets: []vault_helper.KVSecret{
+		KVSecrets: []vaultHelper.KVSecret{
 			{Key: "password", Value: "testPassword"},
 			{Key: "username", Value: "testUser"},
 		},

@@ -87,6 +87,10 @@ func Build(vd VaultDetails, vh vaulthelper.VaultHelper) (*Rabbit, error) {
 }
 
 func GetRabbitQueue(ctx context.Context, r Rabbit) (interface{}, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
 	if time.Now().Unix() > r.VaultDetails.ExpireTime.Unix() {
 		rb, err := Build(r.VaultDetails, vaulthelper.NewVault(r.VaultDetails.Address, r.VaultDetails.Token))
 		if err != nil {

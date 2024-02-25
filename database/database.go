@@ -3,7 +3,7 @@ package database
 import (
 	"github.com/bugfixes/go-bugfixes/logs"
 	"github.com/caarlos0/env/v8"
-	vault_helper "github.com/keloran/vault-helper"
+	vaultHelper "github.com/keloran/vault-helper"
 	"time"
 )
 
@@ -41,7 +41,7 @@ func Setup(vaultAddress, vaultToken string) VaultDetails {
 	}
 }
 
-func Build(vd VaultDetails, vh vault_helper.VaultHelper) (*Database, error) {
+func Build(vd VaultDetails, vh vaultHelper.VaultHelper) (*Database, error) {
 	rds := NewDatabase("", "", "", "", 0)
 	rds.VaultDetails = vd
 

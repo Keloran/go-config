@@ -8,11 +8,11 @@ import (
 	"github.com/keloran/go-config/mongo"
 	"github.com/keloran/go-config/rabbit"
 	"github.com/keloran/go-config/vault"
-	vault_helper "github.com/keloran/vault-helper"
+	vaultHelper "github.com/keloran/vault-helper"
 )
 
 type Config struct {
-	vaultHelper vault_helper.VaultHelper
+	vaultHelper vaultHelper.VaultHelper
 
 	local.Local
 	vault.Vault
@@ -49,7 +49,7 @@ func Vault(cfg *Config) error {
 func Database(cfg *Config) error {
 	vh := cfg.vaultHelper
 	if vh == nil {
-		vh = vault_helper.NewVault(cfg.Vault.Address, cfg.Vault.Token)
+		vh = vaultHelper.NewVault(cfg.Vault.Address, cfg.Vault.Token)
 	}
 
 	d, err := database.Build(database.Setup(cfg.Vault.Address, cfg.Vault.Token), vh)
@@ -65,7 +65,7 @@ func Database(cfg *Config) error {
 func Mongo(cfg *Config) error {
 	vh := cfg.vaultHelper
 	if vh == nil {
-		vh = vault_helper.NewVault(cfg.Vault.Address, cfg.Vault.Token)
+		vh = vaultHelper.NewVault(cfg.Vault.Address, cfg.Vault.Token)
 	}
 
 	m, err := mongo.Build(mongo.Setup(cfg.Vault.Address, cfg.Vault.Token), vh)
@@ -92,7 +92,7 @@ func Keycloak(cfg *Config) error {
 func Rabbit(cfg *Config) error {
 	vh := cfg.vaultHelper
 	if vh == nil {
-		vh = vault_helper.NewVault(cfg.Vault.Address, cfg.Vault.Token)
+		vh = vaultHelper.NewVault(cfg.Vault.Address, cfg.Vault.Token)
 	}
 
 	r, err := rabbit.Build(rabbit.Setup(cfg.Vault.Address, cfg.Vault.Token), vh)
@@ -113,7 +113,7 @@ func Build(opts ...BuildOption) (*Config, error) {
 	return cfg, nil
 }
 
-func BuildLocal(mockVault vault_helper.VaultHelper, opts ...BuildOption) (*Config, error) {
+func BuildLocal(mockVault vaultHelper.VaultHelper, opts ...BuildOption) (*Config, error) {
 	cfg := &Config{}
 
 	cfg.vaultHelper = mockVault

@@ -26,7 +26,6 @@ func NewVault(address, token string) *Vault {
 	}
 }
 
-// BuildVault builds the vault config
 func Build() (*Vault, error) {
 	v := NewVault("", "")
 

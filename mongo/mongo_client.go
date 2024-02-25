@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 	"github.com/bugfixes/go-bugfixes/logs"
-	vault_helper "github.com/keloran/vault-helper"
+	vaultHelper "github.com/keloran/vault-helper"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"time"
 )
 
-type MongoOperations interface {
+type MungoOperations interface {
 	GetMongoClient(ctx context.Context, m Mongo) (*mongo.Client, error)
 	GetMongoDatabase(m Mongo) (*mongo.Database, error)
 	GetMongoCollection(m Mongo, collection string) (*mongo.Collection, error)
@@ -32,7 +32,7 @@ type RealMongoOperations struct {
 
 func (r *RealMongoOperations) GetMongoClient(ctx context.Context, m Mongo) (*mongo.Client, error) {
 	if time.Now().Unix() > m.VaultDetails.ExpireTime.Unix() {
-		mb, err := Build(m.VaultDetails, vault_helper.NewVault(m.VaultDetails.Address, m.VaultDetails.Token))
+		mb, err := Build(m.VaultDetails, vaultHelper.NewVault(m.VaultDetails.Address, m.VaultDetails.Token))
 		if err != nil {
 			return nil, logs.Errorf("error re-building mongo: %v", err)
 		}
@@ -49,7 +49,7 @@ func (r *RealMongoOperations) GetMongoClient(ctx context.Context, m Mongo) (*mon
 
 func (r *RealMongoOperations) GetMongoDatabase(m Mongo) (*mongo.Database, error) {
 	if time.Now().Unix() > m.VaultDetails.ExpireTime.Unix() {
-		mb, err := Build(m.VaultDetails, vault_helper.NewVault(m.VaultDetails.Address, m.VaultDetails.Token))
+		mb, err := Build(m.VaultDetails, vaultHelper.NewVault(m.VaultDetails.Address, m.VaultDetails.Token))
 		if err != nil {
 			return nil, logs.Errorf("error re-building mongo: %v", err)
 		}
@@ -61,7 +61,7 @@ func (r *RealMongoOperations) GetMongoDatabase(m Mongo) (*mongo.Database, error)
 
 func (r *RealMongoOperations) GetMongoCollection(m Mongo, collection string) (*mongo.Collection, error) {
 	if time.Now().Unix() > m.VaultDetails.ExpireTime.Unix() {
-		mb, err := Build(m.VaultDetails, vault_helper.NewVault(m.VaultDetails.Address, m.VaultDetails.Token))
+		mb, err := Build(m.VaultDetails, vaultHelper.NewVault(m.VaultDetails.Address, m.VaultDetails.Token))
 		if err != nil {
 			return nil, logs.Errorf("error re-building mongo: %v", err)
 		}
