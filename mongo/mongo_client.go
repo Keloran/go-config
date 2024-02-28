@@ -58,7 +58,8 @@ func (r *RealMongoOperations) GetMongoDatabase(m Mongo) (*mongo.Database, error)
     m = *mb
   }
 
-  return r.Database(m.Database), nil
+  r.Database = r.Client.Database(m.Database)
+  return r.Database, nil
 }
 
 func (r *RealMongoOperations) GetMongoCollection(m Mongo, collection string) (*mongo.Collection, error) {
@@ -70,7 +71,8 @@ func (r *RealMongoOperations) GetMongoCollection(m Mongo, collection string) (*m
     m = *mb
   }
 
-  return r.Database(m.Database).Collection(m.Collections[collection]), nil
+  r.Collection = r.Client.Database(m.Database).Collection(m.Collections[collection])
+  return r.Collection, nil
 }
 
 func (r *RealMongoOperations) InsertOne(ctx context.Context, document interface{}) (*mongo.InsertOneResult, error) {
