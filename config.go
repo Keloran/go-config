@@ -20,6 +20,7 @@ type Config struct {
 	keycloak.Keycloak
 	mongo.Mongo
 	rabbit.Rabbit
+	ProjectConfigurator
 }
 
 type BuildOption func(*Config) error
@@ -132,4 +133,19 @@ func (c *Config) Build(opts ...BuildOption) error {
 	}
 
 	return nil
+}
+
+// Project Configurators
+type ProjectConfigurator interface {
+	Build(opts ...BuildOption) error
+}
+
+func WithProjectConfigurator(pc ProjectConfigurator) BuildOption {
+	return func(c *Config) error {
+		if err := pc.Build(); err != nil {
+			return logs.Errorf("withProjectConfigurator: %v", err)
+		}
+
+		return nil
+	}
 }

@@ -164,3 +164,35 @@ func TestMongo(t *testing.T) {
 		assert.Equal(t, "testUser", cfg.Mongo.Username)
 	})
 }
+
+// Assuming ProjectConfigurator interface and Config structure are defined as shown previously
+
+// MockProjectConfigurator is a mock implementation for testing purposes.
+type MockProjectConfigurator struct{}
+
+// Build simulates applying project-specific configurations.
+func (mpc *MockProjectConfigurator) Build(opts ...BuildOption) error {
+	if err := os.Setenv("PROJECT_SPECIFIC_CONFIG", "true"); err != nil {
+		return err
+	}
+	return nil
+}
+
+func TestProjectConfig(t *testing.T) {
+	t.Run("project configuration", func(t *testing.T) {
+		os.Clearenv()
+
+		// Assuming this mock sets an environment variable as part of its configuration logic
+		mockProjectConfigurator := MockProjectConfigurator{}
+		mockLocalProject := WithProjectConfigurator(&mockProjectConfigurator)
+
+		// Build configuration including the mock project configurator
+		_, err := Build(mockLocalProject)
+		assert.NoError(t, err)
+
+		// Verify the project-specific configuration was recognized
+		projectSpecificConfig, exists := os.LookupEnv("PROJECT_SPECIFIC_CONFIG")
+		assert.True(t, exists)
+		assert.Equal(t, "true", projectSpecificConfig)
+	})
+}
