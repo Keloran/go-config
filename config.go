@@ -135,7 +135,6 @@ func (c *Config) Build(opts ...BuildOption) error {
 	return nil
 }
 
-// Project Configurators
 type ProjectConfigurator interface {
 	Build(opts ...BuildOption) error
 }
