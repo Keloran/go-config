@@ -2,9 +2,10 @@ package mongo
 
 import (
 	"fmt"
-	"github.com/bugfixes/go-bugfixes/logs"
 	"os"
 	"testing"
+
+	"github.com/bugfixes/go-bugfixes/logs"
 
 	vaultHelper "github.com/keloran/vault-helper"
 	"github.com/stretchr/testify/assert"
