@@ -3,9 +3,10 @@ package mongo
 import (
 	"context"
 	"errors"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/mongo"
-	"testing"
 )
 
 type MockMongoOperations struct {

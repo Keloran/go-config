@@ -1,10 +1,11 @@
 package database
 
 import (
+	"time"
+
 	"github.com/bugfixes/go-bugfixes/logs"
 	"github.com/caarlos0/env/v8"
 	vaultHelper "github.com/keloran/vault-helper"
-	"time"
 )
 
 type VaultDetails struct {

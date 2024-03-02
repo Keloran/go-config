@@ -3,11 +3,12 @@ package rabbit
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/bugfixes/go-bugfixes/logs"
 	"github.com/caarlos0/env/v8"
 	vaulthelper "github.com/keloran/vault-helper"
-	"net/http"
-	"time"
 )
 
 type VaultDetails struct {
