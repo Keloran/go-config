@@ -27,6 +27,7 @@ type Mongo struct {
 	Database string `env:"MONGO_DB" envDefault:""`
 
 	Collections map[string]string
+	Collection  string
 
 	VaultDetails
 	MongoClient MungoClient
@@ -109,4 +110,28 @@ func BuildCollections() map[string]string {
 	}
 
 	return col
+}
+
+// Deprecated: As of ConfigBuilder v0.5.0, use RealMongoOperations.GetMongoClient
+func GetMongoClient(ctx context.Context, m Mongo) (*mongo.Client, error) {
+	if time.Now().Unix() > m.VaultDetails.ExpireTime.Unix() {
+		mb, err := Build(m.VaultDetails, vaultHelper.NewVault(m.VaultDetails.Address, m.VaultDetails.Token))
+		if err != nil {
+			return nil, logs.Errorf("error building mongo: %v", err)
+		}
+		m = *mb
+	}
+
+	mm := RealMongoOperations{}
+	if _, err := mm.GetMongoClient(ctx, m); err != nil {
+		return nil, logs.Errorf("error getting mongo client: %v", err)
+	}
+	if _, err := mm.GetMongoDatabase(m); err != nil {
+		return nil, logs.Errorf("error getting mongo database: %v", err)
+	}
+	if _, err := mm.GetMongoCollection(m, m.Collection); err != nil {
+		return nil, logs.Errorf("error getting mongo collection: %v", err)
+	}
+
+	return mm.Client, nil
 }
