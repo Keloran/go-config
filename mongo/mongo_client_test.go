@@ -54,6 +54,10 @@ func (mock *MockMongoOperations) GetMongoCollection(m Mongo, collection string) 
 	return mock.Collection, nil
 }
 
+func (mock *MockMongoOperations) Disconnect(ctx context.Context) error {
+	return nil
+}
+
 func (mock *MockMongoOperations) InsertOne(ctx context.Context, document interface{}) (*mongo.InsertOneResult, error) {
 	if ctx == nil {
 		ctx = context.Background()
