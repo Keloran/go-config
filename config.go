@@ -1,6 +1,8 @@
 package ConfigBuilder
 
 import (
+	"net/http"
+
 	"github.com/bugfixes/go-bugfixes/logs"
 	"github.com/keloran/go-config/database"
 	"github.com/keloran/go-config/keycloak"
@@ -9,7 +11,6 @@ import (
 	"github.com/keloran/go-config/rabbit"
 	"github.com/keloran/go-config/vault"
 	vaultHelper "github.com/keloran/vault-helper"
-	"net/http"
 )
 
 type Config struct {
