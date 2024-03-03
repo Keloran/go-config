@@ -33,6 +33,21 @@ type Mongo struct {
 	MongoClient MungoClient
 }
 
+type MungoOperations interface {
+	GetMongoClient(ctx context.Context, m Mongo) (*mongo.Client, error)
+	GetMongoDatabase(m Mongo) (*mongo.Database, error)
+	GetMongoCollection(m Mongo, collection string) (*mongo.Collection, error)
+	InsertOne(ctx context.Context, document interface{}) (*mongo.InsertOneResult, error)
+	InsertMany(ctx context.Context, documents []interface{}) (*mongo.InsertManyResult, error)
+	FindOne(ctx context.Context, filter interface{}) *mongo.SingleResult
+	Find(ctx context.Context, filter interface{}) (*mongo.Cursor, error)
+	UpdateOne(ctx context.Context, filter interface{}, update interface{}) (*mongo.UpdateResult, error)
+	UpdateMany(ctx context.Context, filter interface{}, update interface{}) (*mongo.UpdateResult, error)
+	DeleteOne(ctx context.Context, filter interface{}) (*mongo.DeleteResult, error)
+	DeleteMany(ctx context.Context, filter interface{}) (*mongo.DeleteResult, error)
+	Disconnect(ctx context.Context) error
+}
+
 type MungoClient interface {
 	Connect(ctx context.Context, opts ...*options.ClientOptions) (*mongo.Client, error)
 }
