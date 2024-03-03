@@ -112,7 +112,7 @@ func BuildCollections() map[string]string {
 	return col
 }
 
-// Deprecated: As of ConfigBuilder v0.5.0, RealMongoOperations.GetMongoClient
+// Deprecated: As of ConfigBuilder v0.5.0, use RealMongoOperations.GetMongoClient
 func GetMongoClient(ctx context.Context, m Mongo) (*mongo.Client, error) {
 	if time.Now().Unix() > m.VaultDetails.ExpireTime.Unix() {
 		mb, err := Build(m.VaultDetails, vaultHelper.NewVault(m.VaultDetails.Address, m.VaultDetails.Token))
