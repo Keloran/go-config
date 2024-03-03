@@ -1,10 +1,14 @@
 package rabbit
 
 import (
+	"bytes"
+	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"testing"
+	"time"
 
 	vaulthelper "github.com/keloran/vault-helper"
 	"github.com/stretchr/testify/assert"
@@ -13,7 +17,21 @@ import (
 type MockHTTPClient struct{}
 
 func (m *MockHTTPClient) Do(req *http.Request) (*http.Response, error) {
-	return &http.Response{}, nil
+	if req.URL.Path == "/api/queues/testVhost/testQueue/get" {
+		response := `[
+			{"payload":"test message","payload_bytes":12,"redelivered":false}
+		]`
+		return &http.Response{
+			StatusCode: 200,
+			Body:       io.NopCloser(bytes.NewBufferString(response)),
+			Header:     make(http.Header),
+		}, nil
+	}
+	return &http.Response{
+		StatusCode: 404,
+		Body:       io.NopCloser(bytes.NewBufferString("")),
+		Header:     make(http.Header),
+	}, nil
 }
 
 type MockVaultHelper struct {
@@ -84,5 +102,55 @@ func TestBuild(t *testing.T) {
 		r, err := Build(vd, mockVault, &MockHTTPClient{})
 		assert.NoError(t, err)
 		assert.Equal(t, "http://localhost", r.Host)
+	})
+}
+
+func TestGetRabbitQueue(t *testing.T) {
+	t.Run("successful queue retrieval", func(t *testing.T) {
+		mockHTTPClient := &MockHTTPClient{}
+		mockVaultHelper := &MockVaultHelper{}
+
+		// Setup Rabbit instance with mocks
+		rabbit := Rabbit{
+			Host:        "http://localhost",
+			Username:    "testUser",
+			Password:    "testPassword",
+			VHost:       "testVhost",
+			Queue:       "testQueue",
+			HTTPClient:  mockHTTPClient,
+			VaultHelper: mockVaultHelper,
+			VaultDetails: VaultDetails{
+				ExpireTime: time.Now().Add(time.Hour),
+			},
+		}
+
+		// Test GetRabbitQueue
+		result, err := GetRabbitQueue(context.Background(), rabbit)
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+	})
+
+	t.Run("queue retrieval failure", func(t *testing.T) {
+		mockHTTPClient := &MockHTTPClient{}
+		mockVaultHelper := &MockVaultHelper{}
+
+		// Setup Rabbit instance with mocks and an invalid queue name to simulate failure
+		rabbit := Rabbit{
+			Host:        "http://localhost",
+			Username:    "testUser",
+			Password:    "testPassword",
+			VHost:       "testVhost",
+			Queue:       "invalidQueue",
+			HTTPClient:  mockHTTPClient,
+			VaultHelper: mockVaultHelper,
+			VaultDetails: VaultDetails{
+				ExpireTime: time.Now().Add(time.Hour),
+			},
+		}
+
+		// Test GetRabbitQueue
+		result, err := GetRabbitQueue(context.Background(), rabbit)
+		assert.Error(t, err)
+		assert.Nil(t, result)
 	})
 }

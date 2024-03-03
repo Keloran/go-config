@@ -172,7 +172,7 @@ type MockProjectConfigurator struct{}
 
 // Build simulates applying project-specific configurations.
 func (mpc *MockProjectConfigurator) Build(opts ...BuildOption) error {
-	fmt.Sprintf("%v", opts)
+	_ = fmt.Sprintf("%v", opts)
 
 	if err := os.Setenv("PROJECT_SPECIFIC_CONFIG", "true"); err != nil {
 		return err

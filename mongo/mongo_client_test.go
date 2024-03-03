@@ -38,7 +38,7 @@ func (mock *MockMongoOperations) GetMongoDatabase(m Mongo) (*mongo.Database, err
 		return nil, errors.New("mocked error: database is nil") // Return an error when database is nil
 	}
 
-	fmt.Sprintf("Mongo: %v", m)
+	_ = fmt.Sprintf("Mongo: %v", m)
 
 	return mock.Database, nil
 }
@@ -48,7 +48,7 @@ func (mock *MockMongoOperations) GetMongoCollection(m Mongo, collection string) 
 		return nil, errors.New("mocked error: collection is empty") // Return an error when collection is empty
 	}
 
-	fmt.Sprintf("Mongo: %v", m)
+	_ = fmt.Sprintf("Mongo: %v", m)
 
 	// return your mocked Collection and error here
 	return mock.Collection, nil
