@@ -11,6 +11,17 @@ import (
 	vaulthelper "github.com/keloran/vault-helper"
 )
 
+type HTTPClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
+type VaultHelper interface {
+	GetSecrets(path string) error
+	GetSecret(key string) (string, error)
+	Secrets() []vaulthelper.KVSecret
+	LeaseDuration() int
+}
+
 type VaultDetails struct {
 	Address    string
 	Path       string `env:"RABBIT_VAULT_PATH" envDefault:"secret/data/chewedfeed/rabbitmq"`
@@ -28,9 +39,11 @@ type Rabbit struct {
 	Queue          string `env:"RABBIT_QUEUE" envDefault:"" json:"queue,omitempty"`
 
 	VaultDetails
+	HTTPClient
+	VaultHelper
 }
 
-func NewRabbit(port int, host, username, password, vhost, management string) *Rabbit {
+func NewRabbit(port int, host, username, password, vhost, management string, httpClient HTTPClient, vaultHelper VaultHelper) *Rabbit {
 	return &Rabbit{
 		Host:           host,
 		Port:           port,
@@ -38,6 +51,9 @@ func NewRabbit(port int, host, username, password, vhost, management string) *Ra
 		Password:       password,
 		VHost:          vhost,
 		ManagementHost: management,
+
+		HTTPClient:  httpClient,
+		VaultHelper: vaultHelper,
 	}
 }
 
@@ -48,8 +64,8 @@ func Setup(vaultAddress, vaultToken string) VaultDetails {
 	}
 }
 
-func Build(vd VaultDetails, vh vaulthelper.VaultHelper) (*Rabbit, error) {
-	r := NewRabbit(0, "", "", "", "", "")
+func Build(vd VaultDetails, vh vaulthelper.VaultHelper, httpClient HTTPClient) (*Rabbit, error) {
+	r := NewRabbit(0, "", "", "", "", "", httpClient, vh)
 
 	if err := env.Parse(r); err != nil {
 		return nil, logs.Errorf("rabbit: unable to parse rabbit: %v", err)
@@ -93,7 +109,7 @@ func GetRabbitQueue(ctx context.Context, r Rabbit) (interface{}, error) {
 	}
 
 	if time.Now().Unix() > r.VaultDetails.ExpireTime.Unix() {
-		rb, err := Build(r.VaultDetails, vaulthelper.NewVault(r.VaultDetails.Address, r.VaultDetails.Token))
+		rb, err := Build(r.VaultDetails, vaulthelper.NewVault(r.VaultDetails.Address, r.VaultDetails.Token), r.HTTPClient)
 		if err != nil {
 			return nil, logs.Errorf("rabbit: unable to build rabbit: %v", err)
 		}
@@ -109,7 +125,7 @@ func GetRabbitQueue(ctx context.Context, r Rabbit) (interface{}, error) {
 	req.Header.Set("Accept", "application/json")
 	req.SetBasicAuth(r.Username, r.Password)
 
-	res, err := http.DefaultClient.Do(req)
+	res, err := r.HTTPClient.Do(req)
 	if err != nil {
 		return nil, logs.Errorf("rabbit: unable to get queue: %v", err)
 	}

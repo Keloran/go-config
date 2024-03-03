@@ -2,12 +2,19 @@ package rabbit
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"testing"
 
 	vaulthelper "github.com/keloran/vault-helper"
 	"github.com/stretchr/testify/assert"
 )
+
+type MockHTTPClient struct{}
+
+func (m *MockHTTPClient) Do(req *http.Request) (*http.Response, error) {
+	return &http.Response{}, nil
+}
 
 type MockVaultHelper struct {
 	KVSecrets []vaulthelper.KVSecret
@@ -21,7 +28,6 @@ func (m *MockVaultHelper) GetSecrets(path string) error {
 
 	return nil // or simulate an error if needed
 }
-
 func (m *MockVaultHelper) GetSecret(key string) (string, error) {
 	for _, s := range m.Secrets() {
 		if s.Key == key {
@@ -30,11 +36,9 @@ func (m *MockVaultHelper) GetSecret(key string) (string, error) {
 	}
 	return "", fmt.Errorf("key not found")
 }
-
 func (m *MockVaultHelper) Secrets() []vaulthelper.KVSecret {
 	return m.KVSecrets
 }
-
 func (m *MockVaultHelper) LeaseDuration() int {
 	return m.Lease
 }
@@ -52,7 +56,7 @@ func TestBuild(t *testing.T) {
 		}
 		vd := Setup("mockAddress", "mockToken")
 
-		l, err := Build(vd, mockVault)
+		l, err := Build(vd, mockVault, &MockHTTPClient{})
 		assert.NoError(t, err)
 		assert.Equal(t, "", l.Host)
 		assert.Equal(t, 0, l.Port)
@@ -77,7 +81,7 @@ func TestBuild(t *testing.T) {
 		if err := os.Setenv("RABBIT_HOSTNAME", "http://localhost"); err != nil {
 			assert.NoError(t, err)
 		}
-		r, err := Build(vd, mockVault)
+		r, err := Build(vd, mockVault, &MockHTTPClient{})
 		assert.NoError(t, err)
 		assert.Equal(t, "http://localhost", r.Host)
 	})

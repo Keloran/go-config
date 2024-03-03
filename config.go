@@ -9,6 +9,7 @@ import (
 	"github.com/keloran/go-config/rabbit"
 	"github.com/keloran/go-config/vault"
 	vaultHelper "github.com/keloran/vault-helper"
+	"net/http"
 )
 
 type Config struct {
@@ -96,7 +97,7 @@ func Rabbit(cfg *Config) error {
 		vh = vaultHelper.NewVault(cfg.Vault.Address, cfg.Vault.Token)
 	}
 
-	r, err := rabbit.Build(rabbit.Setup(cfg.Vault.Address, cfg.Vault.Token), vh)
+	r, err := rabbit.Build(rabbit.Setup(cfg.Vault.Address, cfg.Vault.Token), vh, &http.Client{})
 	if err != nil {
 		return logs.Errorf("build rabbit: %v", err)
 	}
