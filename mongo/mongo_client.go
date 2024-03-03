@@ -23,6 +23,7 @@ type MungoOperations interface {
 	UpdateMany(ctx context.Context, filter interface{}, update interface{}) (*mongo.UpdateResult, error)
 	DeleteOne(ctx context.Context, filter interface{}) (*mongo.DeleteResult, error)
 	DeleteMany(ctx context.Context, filter interface{}) (*mongo.DeleteResult, error)
+	Disconnect(ctx context.Context) error
 }
 
 type RealMongoOperations struct {
@@ -73,6 +74,10 @@ func (r *RealMongoOperations) GetMongoCollection(m Mongo, collection string) (*m
 
 	r.Collection = r.Client.Database(m.Database).Collection(m.Collections[collection])
 	return r.Collection, nil
+}
+
+func (r *RealMongoOperations) Disconnect(ctx context.Context) error {
+	return r.Client.Disconnect(ctx)
 }
 
 func (r *RealMongoOperations) InsertOne(ctx context.Context, document interface{}) (*mongo.InsertOneResult, error) {
