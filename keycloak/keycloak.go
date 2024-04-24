@@ -1,6 +1,9 @@
 package keycloak
 
 import (
+	"context"
+
+	"github.com/Nerzal/gocloak/v13"
 	"github.com/bugfixes/go-bugfixes/logs"
 	"github.com/caarlos0/env/v8"
 )
@@ -27,4 +30,14 @@ func Build() (*Keycloak, error) {
 		return nil, logs.Errorf("keycloak: unable to parse keycloak: %v", err)
 	}
 	return k, nil
+}
+
+func (k *Keycloak) GetClient() (*gocloak.GoCloak, *gocloak.JWT, error) {
+	client := gocloak.NewClient(k.Host)
+	token, err := client.LoginClient(context.Background(), k.Client, k.Secret, k.Realm)
+	if err != nil {
+		return nil, nil, logs.Errorf("failed to login client: %v", err)
+	}
+
+	return client, token, nil
 }
