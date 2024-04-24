@@ -10,11 +10,11 @@ import (
 
 // Local is the local config
 type Local struct {
-	KeepLocal   bool              `env:"BUGFIXES_LOCAL_ONLY" envDefault:"false"`
-	Development bool              `env:"DEVELOPMENT" envDefault:"false"`
-	HTTPPort    int               `env:"HTTP_PORT" envDefault:"80"`
-	GRPCPort    int               `env:"GRPC_PORT" envDefault:"3000"`
-	EnvMap      map[string]string `env:"ENV_MAP" envDefault:"{}"`
+	KeepLocal   bool `env:"BUGFIXES_LOCAL_ONLY" envDefault:"false"`
+	Development bool `env:"DEVELOPMENT" envDefault:"false"`
+	HTTPPort    int  `env:"HTTP_PORT" envDefault:"80"`
+	GRPCPort    int  `env:"GRPC_PORT" envDefault:"3000"`
+	EnvMap      map[string]string
 }
 
 func NewLocal(local, dev bool, http, grpc int) *Local {
