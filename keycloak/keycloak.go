@@ -32,9 +32,9 @@ func Build() (*Keycloak, error) {
 	return k, nil
 }
 
-func (k *Keycloak) GetClient() (*gocloak.GoCloak, *gocloak.JWT, error) {
+func (k *Keycloak) GetClient(ctx context.Context) (*gocloak.GoCloak, *gocloak.JWT, error) {
 	client := gocloak.NewClient(k.Host)
-	token, err := client.LoginClient(context.Background(), k.Client, k.Secret, k.Realm)
+	token, err := client.LoginClient(ctx, k.Client, k.Secret, k.Realm)
 	if err != nil {
 		return nil, nil, logs.Errorf("failed to login client: %v", err)
 	}
