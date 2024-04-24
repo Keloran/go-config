@@ -47,3 +47,10 @@ func (l *Local) getAllEnvironment() {
 	}
 	l.EnvMap = envVars
 }
+
+func (l *Local) GetValue(key string) string {
+	if value, ok := l.EnvMap[key]; ok {
+		return value
+	}
+	return ""
+}
