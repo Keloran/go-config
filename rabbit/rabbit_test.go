@@ -111,7 +111,7 @@ func TestGetRabbitQueue(t *testing.T) {
 		mockVaultHelper := &MockVaultHelper{}
 
 		// Setup Rabbit instance with mocks
-		rabbit := Rabbit{
+		rabbit := System{
 			Host:        "http://localhost",
 			Username:    "testUser",
 			Password:    "testPassword",
@@ -135,7 +135,7 @@ func TestGetRabbitQueue(t *testing.T) {
 		mockVaultHelper := &MockVaultHelper{}
 
 		// Setup Rabbit instance with mocks and an invalid queue name to simulate failure
-		rabbit := Rabbit{
+		rabbit := System{
 			Host:        "http://localhost",
 			Username:    "testUser",
 			Password:    "testPassword",

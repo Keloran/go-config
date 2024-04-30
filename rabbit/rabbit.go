@@ -29,7 +29,7 @@ type VaultDetails struct {
 	ExpireTime time.Time
 }
 
-type Rabbit struct {
+type System struct {
 	Host           string `env:"RABBIT_HOSTNAME" envDefault:"" json:"host,omitempty"`
 	ManagementHost string `env:"RABBIT_MANAGEMENT_HOSTNAME" envDefault:"" json:"management_host,omitempty"`
 	Port           int    `env:"RABBIT_PORT" envDefault:"" json:"port,omitempty"`
@@ -43,8 +43,8 @@ type Rabbit struct {
 	VaultHelper
 }
 
-func NewRabbit(port int, host, username, password, vhost, management string, httpClient HTTPClient, vaultHelper VaultHelper) *Rabbit {
-	return &Rabbit{
+func NewRabbit(port int, host, username, password, vhost, management string, httpClient HTTPClient, vaultHelper VaultHelper) *System {
+	return &System{
 		Host:           host,
 		Port:           port,
 		Username:       username,
@@ -64,7 +64,7 @@ func Setup(vaultAddress, vaultToken string) VaultDetails {
 	}
 }
 
-func Build(vd VaultDetails, vh vaulthelper.VaultHelper, httpClient HTTPClient) (*Rabbit, error) {
+func Build(vd VaultDetails, vh vaulthelper.VaultHelper, httpClient HTTPClient) (*System, error) {
 	r := NewRabbit(0, "", "", "", "", "", httpClient, vh)
 
 	if err := env.Parse(r); err != nil {
@@ -103,7 +103,7 @@ func Build(vd VaultDetails, vh vaulthelper.VaultHelper, httpClient HTTPClient) (
 	return r, nil
 }
 
-func GetRabbitQueue(ctx context.Context, r Rabbit) (interface{}, error) {
+func GetRabbitQueue(ctx context.Context, r System) (interface{}, error) {
 	if ctx == nil {
 		ctx = context.Background()
 	}

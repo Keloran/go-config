@@ -20,7 +20,7 @@ type VaultDetails struct {
 	ExpireTime time.Time
 }
 
-type Mongo struct {
+type System struct {
 	Host     string `env:"MONGO_HOST" envDefault:"localhost"`
 	Username string `env:"MONGO_USER" envDefault:""`
 	Password string `env:"MONGO_PASS" envDefault:""`
@@ -34,9 +34,9 @@ type Mongo struct {
 }
 
 type MungoOperations interface {
-	GetMongoClient(ctx context.Context, m Mongo) (*mongo.Client, error)
-	GetMongoDatabase(m Mongo) (*mongo.Database, error)
-	GetMongoCollection(m Mongo, collection string) (*mongo.Collection, error)
+	GetMongoClient(ctx context.Context, m System) (*mongo.Client, error)
+	GetMongoDatabase(m System) (*mongo.Database, error)
+	GetMongoCollection(m System, collection string) (*mongo.Collection, error)
 	InsertOne(ctx context.Context, document interface{}) (*mongo.InsertOneResult, error)
 	InsertMany(ctx context.Context, documents []interface{}) (*mongo.InsertManyResult, error)
 	FindOne(ctx context.Context, filter interface{}) *mongo.SingleResult
@@ -52,8 +52,8 @@ type MungoClient interface {
 	Connect(ctx context.Context, opts ...*options.ClientOptions) (*mongo.Client, error)
 }
 
-func NewMongo(host, username, password, database string) *Mongo {
-	return &Mongo{
+func NewMongo(host, username, password, database string) *System {
+	return &System{
 		Host:     host,
 		Username: username,
 		Password: password,
@@ -68,7 +68,7 @@ func Setup(vaultAddress, vaultToken string) VaultDetails {
 	}
 }
 
-func Build(vd VaultDetails, vh vaultHelper.VaultHelper) (*Mongo, error) {
+func Build(vd VaultDetails, vh vaultHelper.VaultHelper) (*System, error) {
 	mungo := NewMongo("", "", "", "")
 	mungo.VaultDetails = vd
 
@@ -128,7 +128,7 @@ func BuildCollections() map[string]string {
 }
 
 // Deprecated: As of ConfigBuilder v0.5.0, use RealMongoOperations.GetMongoClient
-func GetMongoClient(ctx context.Context, m Mongo) (*mongo.Client, error) {
+func GetMongoClient(ctx context.Context, m System) (*mongo.Client, error) {
 	if time.Now().Unix() > m.VaultDetails.ExpireTime.Unix() {
 		mb, err := Build(m.VaultDetails, vaultHelper.NewVault(m.VaultDetails.Address, m.VaultDetails.Token))
 		if err != nil {

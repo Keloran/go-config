@@ -10,8 +10,8 @@ import (
 	"github.com/caarlos0/env/v8"
 )
 
-// Vault is the vault config
-type Vault struct {
+// System is the vault config
+type System struct {
 	Host       string `env:"VAULT_HOST" envDefault:"localhost"`
 	Port       string `env:"VAULT_PORT" envDefault:""`
 	Token      string `env:"VAULT_TOKEN" envDefault:"root"`
@@ -19,14 +19,14 @@ type Vault struct {
 	ExpireTime time.Time
 }
 
-func NewVault(address, token string) *Vault {
-	return &Vault{
+func NewVault(address, token string) *System {
+	return &System{
 		Address: address,
 		Token:   token,
 	}
 }
 
-func Build() (*Vault, error) {
+func Build() (*System, error) {
 	v := NewVault("", "")
 
 	if err := env.Parse(v); err != nil {
