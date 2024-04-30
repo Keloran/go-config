@@ -15,7 +15,7 @@ type VaultDetails struct {
 	ExpireTime time.Time
 }
 
-type Database struct {
+type System struct {
 	Host     string `env:"RDS_HOSTNAME" envDefault:"postgres.chewedfeed"`
 	Port     int    `env:"RDS_PORT" envDefault:"5432"`
 	User     string `env:"RDS_USERNAME"`
@@ -25,8 +25,8 @@ type Database struct {
 	VaultDetails
 }
 
-func NewDatabase(host, user, password, database string, port int) *Database {
-	return &Database{
+func NewDatabase(host, user, password, database string, port int) *System {
+	return &System{
 		Host:     host,
 		Port:     port,
 		User:     user,
@@ -42,7 +42,7 @@ func Setup(vaultAddress, vaultToken string) VaultDetails {
 	}
 }
 
-func Build(vd VaultDetails, vh vaultHelper.VaultHelper) (*Database, error) {
+func Build(vd VaultDetails, vh vaultHelper.VaultHelper) (*System, error) {
 	rds := NewDatabase("", "", "", "", 0)
 	rds.VaultDetails = vd
 

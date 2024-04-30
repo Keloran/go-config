@@ -16,12 +16,12 @@ import (
 type Config struct {
 	vaultHelper vaultHelper.VaultHelper
 
-	local.Local
-	vault.Vault
-	database.Database
-	keycloak.Keycloak
-	mongo.Mongo
-	rabbit.Rabbit
+	Local local.System
+	Vault vault.System
+	Database database.System
+	Keycloak keycloak.System
+	Mongo mongo.System
+	Rabbit rabbit.System
 	ProjectConfigurator
 }
 

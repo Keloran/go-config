@@ -8,8 +8,8 @@ import (
 	"github.com/caarlos0/env/v8"
 )
 
-// Local is the local config
-type Local struct {
+// System is the local config
+type System struct {
 	KeepLocal   bool `env:"BUGFIXES_LOCAL_ONLY" envDefault:"false"`
 	Development bool `env:"DEVELOPMENT" envDefault:"false"`
 	HTTPPort    int  `env:"HTTP_PORT" envDefault:"80"`
@@ -17,8 +17,8 @@ type Local struct {
 	EnvMap      map[string]string
 }
 
-func NewLocal(local, dev bool, http, grpc int) *Local {
-	return &Local{
+func NewLocal(local, dev bool, http, grpc int) *System {
+	return &System{
 		KeepLocal:   local,
 		Development: dev,
 		HTTPPort:    http,
@@ -26,7 +26,7 @@ func NewLocal(local, dev bool, http, grpc int) *Local {
 	}
 }
 
-func Build() (*Local, error) {
+func Build() (*System, error) {
 	l := NewLocal(false, false, 80, 3000)
 	if err := env.Parse(l); err != nil {
 		return l, logs.Errorf("failed to parse local config: %v", err)
@@ -37,7 +37,7 @@ func Build() (*Local, error) {
 	return l, nil
 }
 
-func (l *Local) getAllEnvironment() {
+func (l *System) getAllEnvironment() {
 	envVars := make(map[string]string)
 	for _, e := range os.Environ() {
 		pair := strings.SplitN(e, "=", 2)
@@ -48,7 +48,7 @@ func (l *Local) getAllEnvironment() {
 	l.EnvMap = envVars
 }
 
-func (l *Local) GetValue(key string) string {
+func (l *System) GetValue(key string) string {
 	if value, ok := l.EnvMap[key]; ok {
 		return value
 	}

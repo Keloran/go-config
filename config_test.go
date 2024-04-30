@@ -45,10 +45,11 @@ func TestBuild(t *testing.T) {
 		os.Clearenv() // Clear all environment variables
 
 		cfg, err := Build(Local)
+		fmt.Printf("%v", cfg)
 		assert.NoError(t, err)
-		assert.Equal(t, false, cfg.KeepLocal)
-		assert.Equal(t, false, cfg.Development)
-		assert.Equal(t, 80, cfg.HTTPPort)
+		assert.Equal(t, false, cfg.Local.KeepLocal)
+		assert.Equal(t, false, cfg.Local.Development)
+		assert.Equal(t, 80, cfg.Local.HTTPPort)
 	})
 
 	t.Run("custom values", func(t *testing.T) {
@@ -66,9 +67,9 @@ func TestBuild(t *testing.T) {
 
 		cfg, err := Build(Local)
 		assert.NoError(t, err)
-		assert.Equal(t, true, cfg.KeepLocal)
-		assert.Equal(t, true, cfg.Development)
-		assert.Equal(t, 8080, cfg.HTTPPort)
+		assert.Equal(t, true, cfg.Local.KeepLocal)
+		assert.Equal(t, true, cfg.Local.Development)
+		assert.Equal(t, 8080, cfg.Local.HTTPPort)
 	})
 }
 

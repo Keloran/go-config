@@ -17,7 +17,7 @@ type RealMongoOperations struct {
   Database   *mongo.Database
 }
 
-func (r *RealMongoOperations) GetMongoClient(ctx context.Context, m Mongo) (*mongo.Client, error) {
+func (r *RealMongoOperations) GetMongoClient(ctx context.Context, m System) (*mongo.Client, error) {
   if time.Now().Unix() > m.VaultDetails.ExpireTime.Unix() {
     mb, err := Build(m.VaultDetails, vaultHelper.NewVault(m.VaultDetails.Address, m.VaultDetails.Token))
     if err != nil {
@@ -35,7 +35,7 @@ func (r *RealMongoOperations) GetMongoClient(ctx context.Context, m Mongo) (*mon
   return client, nil
 }
 
-func (r *RealMongoOperations) GetMongoDatabase(m Mongo) (*mongo.Database, error) {
+func (r *RealMongoOperations) GetMongoDatabase(m System) (*mongo.Database, error) {
   if time.Now().Unix() > m.VaultDetails.ExpireTime.Unix() {
     mb, err := Build(m.VaultDetails, vaultHelper.NewVault(m.VaultDetails.Address, m.VaultDetails.Token))
     if err != nil {
@@ -48,7 +48,7 @@ func (r *RealMongoOperations) GetMongoDatabase(m Mongo) (*mongo.Database, error)
   return r.Database, nil
 }
 
-func (r *RealMongoOperations) GetMongoCollection(m Mongo, collection string) (*mongo.Collection, error) {
+func (r *RealMongoOperations) GetMongoCollection(m System, collection string) (*mongo.Collection, error) {
   if time.Now().Unix() > m.VaultDetails.ExpireTime.Unix() {
     mb, err := Build(m.VaultDetails, vaultHelper.NewVault(m.VaultDetails.Address, m.VaultDetails.Token))
     if err != nil {

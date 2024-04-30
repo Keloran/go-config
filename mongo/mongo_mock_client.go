@@ -115,7 +115,7 @@ func (mr *MockMungoOperationsMockRecorder) FindOne(ctx, filter any) *gomock.Call
 }
 
 // GetMongoClient mocks base method.
-func (m_2 *MockMungoOperations) GetMongoClient(ctx context.Context, m Mongo) (*mongo0.Client, error) {
+func (m_2 *MockMungoOperations) GetMongoClient(ctx context.Context, m System) (*mongo0.Client, error) {
   m_2.ctrl.T.Helper()
   ret := m_2.ctrl.Call(m_2, "GetMongoClient", ctx, m)
   ret0, _ := ret[0].(*mongo0.Client)
@@ -130,7 +130,7 @@ func (mr *MockMungoOperationsMockRecorder) GetMongoClient(ctx, m any) *gomock.Ca
 }
 
 // GetMongoCollection mocks base method.
-func (m_2 *MockMungoOperations) GetMongoCollection(m Mongo, collection string) (*mongo0.Collection, error) {
+func (m_2 *MockMungoOperations) GetMongoCollection(m System, collection string) (*mongo0.Collection, error) {
   m_2.ctrl.T.Helper()
   ret := m_2.ctrl.Call(m_2, "GetMongoCollection", m, collection)
   ret0, _ := ret[0].(*mongo0.Collection)
@@ -145,7 +145,7 @@ func (mr *MockMungoOperationsMockRecorder) GetMongoCollection(m, collection any)
 }
 
 // GetMongoDatabase mocks base method.
-func (m_2 *MockMungoOperations) GetMongoDatabase(m Mongo) (*mongo0.Database, error) {
+func (m_2 *MockMungoOperations) GetMongoDatabase(m System) (*mongo0.Database, error) {
   m_2.ctrl.T.Helper()
   ret := m_2.ctrl.Call(m_2, "GetMongoDatabase", m)
   ret0, _ := ret[0].(*mongo0.Database)
