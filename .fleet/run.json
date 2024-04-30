@@ -1,0 +1,11 @@
+{
+  "configurations": [
+    {
+      "type": "go-test",
+      "name": "Go-test configuration",
+      "goExecPath": "/bin/go",
+      "buildParams": [],
+    },
+    
+  ]
+}
