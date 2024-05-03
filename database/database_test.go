@@ -45,7 +45,7 @@ func TestBuild(t *testing.T) {
 		},
 	}
 
-	vd := Setup("mockAddress", "mockToken")
+	vd := Setup("mockAddress", "mockToken", false, nil)
 	db, err := Build(vd, mockVault)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

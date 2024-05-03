@@ -15,19 +15,27 @@ import (
 
 type Config struct {
 	vaultHelper vaultHelper.VaultHelper
+  VaultExclusive bool
+  VaultPaths vault.VaultPaths
 
-  Local local.System
-	Vault vault.System
+	Local    local.System
+	Vault    vault.System
 	Database database.System
 	Keycloak keycloak.System
-	Mongo mongo.System
-	Rabbit rabbit.System
+	Mongo    mongo.System
+	Rabbit   rabbit.System
 
-  // Project level properties
+	// Project level properties
 	ProjectProperties map[string]interface{}
 }
 
 type BuildOption func(*Config) error
+
+func NewConfig(vaultExclusive bool) *Config {
+	return &Config{
+		VaultExclusive: vaultExclusive,
+	}
+}
 
 func Local(cfg *Config) error {
 	l, err := local.Build()
@@ -57,12 +65,22 @@ func Database(cfg *Config) error {
 		vh = vaultHelper.NewVault(cfg.Vault.Address, cfg.Vault.Token)
 	}
 
-	d, err := database.Build(database.Setup(cfg.Vault.Address, cfg.Vault.Token), vh)
-	if err != nil {
-		return logs.Errorf("build database: %v", err)
-	}
+  if cfg.VaultExclusive {
+    d, err := database.Build(database.Setup(cfg.Vault.Address, cfg.Vault.Token, true, &cfg.VaultPaths), vh)
+    if err != nil {
+      return logs.Errorf("build database: %v", err)
+    }
 
-	cfg.Database = *d
+    cfg.Database = *d
+    return nil
+  }
+
+  d, err := database.Build(database.Setup(cfg.Vault.Address, cfg.Vault.Token, false, nil), vh)
+  if err != nil {
+    return logs.Errorf("build database: %v", err)
+  }
+
+  cfg.Database = *d
 
 	return nil
 }

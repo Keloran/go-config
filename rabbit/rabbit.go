@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"time"
+  "strconv"
+  "time"
 
 	"github.com/bugfixes/go-bugfixes/logs"
 	"github.com/caarlos0/env/v8"
@@ -24,9 +25,15 @@ type VaultHelper interface {
 
 type VaultDetails struct {
 	Address    string
-	Path       string `env:"RABBIT_VAULT_PATH" envDefault:"secret/data/chewedfeed/rabbitmq"`
 	Token      string
+
+  Path       string `env:"RABBIT_VAULT_PATH" envDefault:"secret/data/chewedfeed/rabbitmq"`
+  CredPath   string `env:"RABBIT_VAULT_CREDS_PATH" envDefault:"secrets/data/chewedfeed/rabbitmq"`
+  DetailsPath string `env:"RABBIT_VAULT_DETAILS_PATH" envDefault:"secrets/data/chewedfeed/details"`
+
 	ExpireTime time.Time
+
+  Exclusive bool
 }
 
 type System struct {
@@ -57,15 +64,92 @@ func NewRabbit(port int, host, username, password, vhost, management string, htt
 	}
 }
 
-func Setup(vaultAddress, vaultToken string) VaultDetails {
+func Setup(vaultAddress, vaultToken string, exclusive bool) VaultDetails {
 	return VaultDetails{
 		Address: vaultAddress,
 		Token:   vaultToken,
+
+    Exclusive: exclusive,
 	}
+}
+
+func vaultBuild(vd VaultDetails, vh vaulthelper.VaultHelper, client HTTPClient) (*System, error) {
+  r:= NewRabbit(0, "", "", "", "", "", client, vh)
+
+  // Creds
+  if err := vh.GetSecrets(vd.CredPath); err != nil {
+    return r, logs.Errorf("failed to get cred secrets from vault: %v", err)
+  }
+  if vh.Secrets() == nil {
+    return r, logs.Error("no rabbit cred secrets found")
+  }
+
+  username, err := vh.GetSecret("username")
+  if err != nil {
+    return r, logs.Errorf("failed to get username: %v", err)
+  }
+  r.Username = username
+
+  password, err := vh.GetSecret("password")
+  if err != nil {
+    return r, logs.Errorf("failed to get password: %v", err)
+  }
+  r.Password = password
+
+  // Details
+  if err := vh.GetSecrets(vd.DetailsPath); err != nil {
+    return r, logs.Errorf("failed to get details secrets from vault: %v", err)
+  }
+  if vh.Secrets() == nil {
+    return r, logs.Error("no rabbit detail secrets found")
+  }
+
+  host, err := vh.GetSecret("rabbit-hostname")
+  if err != nil {
+    return r, logs.Errorf("failed to get hostname: %v", err)
+  }
+  r.Host = host
+
+  managementHost, err := vh.GetSecret("rabbit-management-host")
+  if err != nil {
+    return r, logs.Errorf("failed to get rabbit management host: %v", err)
+  }
+  r.ManagementHost = managementHost
+
+  port, err := vh.GetSecret("rabbit-port")
+  if err != nil {
+    return r, logs.Errorf("failed to get rabbit port: %v", err)
+  }
+  if port != "" {
+    iport, err := strconv.Atoi(port)
+    if err != nil {
+      return r, logs.Errorf("failed to parse rabbit port: %v", err)
+    }
+    r.Port = iport
+  }
+
+  vhost, err := vh.GetSecret("rabbit-vhost")
+  if err != nil {
+    return r, logs.Errorf("failed to get rabbit vhost: %v", err)
+  }
+  r.VHost = vhost
+
+  queue, err := vh.GetSecret("rabbit-queue")
+  if err != nil {
+    return r, logs.Errorf("failed to get rabbit queue: %v", err)
+  }
+  r.Queue = queue
+
+  return r, nil
 }
 
 func Build(vd VaultDetails, vh vaulthelper.VaultHelper, httpClient HTTPClient) (*System, error) {
 	r := NewRabbit(0, "", "", "", "", "", httpClient, vh)
+  r.VaultDetails = vd
+
+  if vd.Exclusive {
+    return vaultBuild(vd, vh, httpClient)
+  }
 
 	if err := env.Parse(r); err != nil {
 		return nil, logs.Errorf("rabbit: unable to parse rabbit: %v", err)

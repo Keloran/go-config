@@ -173,9 +173,9 @@ type MockProjectConfigurator struct{}
 
 // Build simulates applying project-specific configurations.
 func (mpc MockProjectConfigurator) Build(c *Config) error {
-  if c.ProjectProperties == nil {
-    c.ProjectProperties = make(map[string]interface{})
-  }
+	if c.ProjectProperties == nil {
+		c.ProjectProperties = make(map[string]interface{})
+	}
 	c.ProjectProperties["TestProperty"] = true
 	return nil
 }
@@ -195,15 +195,15 @@ func TestProjectConfig(t *testing.T) {
 }
 
 func TestProjectBuild(t *testing.T) {
-  t.Run("project build configuration", func(t *testing.T) {
-    os.Clearenv()
+	t.Run("project build configuration", func(t *testing.T) {
+		os.Clearenv()
 
-    cfgNoProps, _ := Build(Local)
-    assert.Equal(t, map[string]interface{}(map[string]interface{}(nil)), cfgNoProps.ProjectProperties)
+		cfgNoProps, _ := Build(Local)
+		assert.Equal(t, map[string]interface{}(map[string]interface{}(nil)), cfgNoProps.ProjectProperties)
 
-    cfg, err := Build(Local, WithProjectConfigurator(MockProjectConfigurator{}))
-    assert.NoError(t, err)
+		cfg, err := Build(Local, WithProjectConfigurator(MockProjectConfigurator{}))
+		assert.NoError(t, err)
 
-    assert.Equal(t, true, cfg.ProjectProperties["TestProperty"])
-  })
+		assert.Equal(t, true, cfg.ProjectProperties["TestProperty"])
+	})
 }
