@@ -76,7 +76,7 @@ func Setup(vaultAddress, vaultToken string, exclusive bool) VaultDetails {
 }
 
 func vaultBuild(vd VaultDetails, vh vaultHelper.VaultHelper) (*System, error) {
-  m, err := NewMongo("", "", "", "")
+  m := NewMongo("", "", "", "")
   m.VaultDetails = vd
 
   if err := vh.GetSecrets(vd.CredPath); err != nil {

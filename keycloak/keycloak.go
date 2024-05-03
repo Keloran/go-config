@@ -2,7 +2,6 @@ package keycloak
 
 import (
 	"context"
-  "github.com/keloran/go-config/vault"
   vaultHelper "github.com/keloran/vault-helper"
 
   "github.com/Nerzal/gocloak/v13"
@@ -50,14 +49,10 @@ func Build(vd VaultDetails, vh vaultHelper.VaultHelper) (*System, error) {
 	return k, nil
 }
 
-func Setup(address, token string, exclusive bool, paths *vault.VaultPaths) VaultDetails {
+func Setup(address, token string, exclusive bool) VaultDetails {
   vd := VaultDetails{
     Address: address,
     Token: token,
-  }
-
-  if paths != nil {
-    vd.DetailPath = paths.Keycloak.Details
   }
 
   return vd

@@ -91,7 +91,7 @@ func Mongo(cfg *Config) error {
 		vh = vaultHelper.NewVault(cfg.Vault.Address, cfg.Vault.Token)
 	}
 
-	m, err := mongo.Build(mongo.Setup(cfg.Vault.Address, cfg.Vault.Token), vh)
+	m, err := mongo.Build(mongo.Setup(cfg.Vault.Address, cfg.Vault.Token, cfg.VaultExclusive), vh)
 	if err != nil {
 		return logs.Errorf("build mongo: %v", err)
 	}
@@ -102,7 +102,12 @@ func Mongo(cfg *Config) error {
 }
 
 func Keycloak(cfg *Config) error {
-	k, err := keycloak.Build()
+  vh := cfg.vaultHelper
+  if vh == nil {
+    vh = vaultHelper.NewVault(cfg.Vault.Address, cfg.Vault.Token)
+  }
+
+  k, err := keycloak.Build(keycloak.Setup(cfg.Vault.Address, cfg.Vault.Token, cfg.VaultExclusive), vh)
 	if err != nil {
 		return logs.Errorf("build keycloak: %v", err)
 	}
@@ -118,7 +123,7 @@ func Rabbit(cfg *Config) error {
 		vh = vaultHelper.NewVault(cfg.Vault.Address, cfg.Vault.Token)
 	}
 
-	r, err := rabbit.Build(rabbit.Setup(cfg.Vault.Address, cfg.Vault.Token), vh, &http.Client{})
+	r, err := rabbit.Build(rabbit.Setup(cfg.Vault.Address, cfg.Vault.Token, cfg.VaultExclusive), vh, &http.Client{})
 	if err != nil {
 		return logs.Errorf("build rabbit: %v", err)
 	}
