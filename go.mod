@@ -6,7 +6,7 @@ toolchain go1.22.2
 
 require (
 	github.com/Nerzal/gocloak/v13 v13.9.0
-	github.com/bugfixes/go-bugfixes v0.10.0
+	github.com/bugfixes/go-bugfixes v0.12.1
 	github.com/caarlos0/env/v8 v8.0.0
 	github.com/keloran/vault-helper v0.8.2
 	github.com/stretchr/testify v1.9.0
@@ -17,7 +17,6 @@ require (
 require (
 	github.com/cenkalti/backoff/v3 v3.2.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/go-jose/go-jose/v3 v3.0.3 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.1 // indirect
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
 	github.com/go-resty/resty/v2 v2.12.0 // indirect

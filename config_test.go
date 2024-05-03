@@ -172,12 +172,11 @@ func TestMongo(t *testing.T) {
 type MockProjectConfigurator struct{}
 
 // Build simulates applying project-specific configurations.
-func (mpc *MockProjectConfigurator) Build(opts ...BuildOption) error {
-	_ = fmt.Sprintf("%v", opts)
-
-	if err := os.Setenv("PROJECT_SPECIFIC_CONFIG", "true"); err != nil {
-		return err
-	}
+func (mpc MockProjectConfigurator) Build(c *Config) error {
+  if c.ProjectProperties == nil {
+    c.ProjectProperties = make(map[string]interface{})
+  }
+	c.ProjectProperties["TestProperty"] = true
 	return nil
 }
 
@@ -192,10 +191,19 @@ func TestProjectConfig(t *testing.T) {
 		// Build configuration including the mock project configurator
 		_, err := Build(mockLocalProject)
 		assert.NoError(t, err)
-
-		// Verify the project-specific configuration was recognized
-		projectSpecificConfig, exists := os.LookupEnv("PROJECT_SPECIFIC_CONFIG")
-		assert.True(t, exists)
-		assert.Equal(t, "true", projectSpecificConfig)
 	})
+}
+
+func TestProjectBuild(t *testing.T) {
+  t.Run("project build configuration", func(t *testing.T) {
+    os.Clearenv()
+
+    cfgNoProps, _ := Build(Local)
+    assert.Equal(t, map[string]interface{}(map[string]interface{}(nil)), cfgNoProps.ProjectProperties)
+
+    cfg, err := Build(Local, WithProjectConfigurator(MockProjectConfigurator{}))
+    assert.NoError(t, err)
+
+    assert.Equal(t, true, cfg.ProjectProperties["TestProperty"])
+  })
 }
