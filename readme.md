@@ -31,3 +31,34 @@ func main() {
   }
 }
 ```
+
+---
+### This is how to create a project configuration
+
+above is the old way, the new way is
+
+```
+import (
+ ConfigBuilder "github.com/keloran/go-config"
+)
+
+type ProjectConfig struct {}
+
+func (pc ProjectConfig) Build(cfg *ConfigBuilder) error {
+  if cfg.ProjectProperties == nil {
+    c.ProjectProperties = make(map[string]interface{})
+  }
+
+  c.ProjectProperties["TestProperty"] = true
+  return nil
+}
+
+func main() {
+  cfg, err := ConfigBuilder.Build(WithProjectConfigurator(ProjectConfig{}))
+  if err != nil {
+    panic(err)
+  }
+
+  fmt.Printf(cfg.ProjectProperies["TestProperty"])
+}
+```

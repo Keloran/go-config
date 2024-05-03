@@ -16,13 +16,15 @@ import (
 type Config struct {
 	vaultHelper vaultHelper.VaultHelper
 
-	Local local.System
+  Local local.System
 	Vault vault.System
 	Database database.System
 	Keycloak keycloak.System
 	Mongo mongo.System
 	Rabbit rabbit.System
-	ProjectConfigurator
+
+  // Project level properties
+	ProjectProperties map[string]interface{}
 }
 
 type BuildOption func(*Config) error
@@ -138,12 +140,12 @@ func (c *Config) Build(opts ...BuildOption) error {
 }
 
 type ProjectConfigurator interface {
-	Build(opts ...BuildOption) error
+	Build(*Config) error
 }
 
 func WithProjectConfigurator(pc ProjectConfigurator) BuildOption {
 	return func(c *Config) error {
-		if err := pc.Build(); err != nil {
+		if err := pc.Build(c); err != nil {
 			return logs.Errorf("withProjectConfigurator: %v", err)
 		}
 
