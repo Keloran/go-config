@@ -14,13 +14,12 @@ import (
 )
 
 type Config struct {
-	vaultHelper vaultHelper.VaultHelper
-  VaultExclusive bool
+	VaultHelper *vaultHelper.VaultHelper
   VaultPaths vault.VaultPaths
 
 	Local    local.System
 	Vault    vault.System
-	Database database.System
+	Database database.Details
 	Keycloak keycloak.System
 	Mongo    mongo.System
 	Rabbit   rabbit.System
@@ -31,9 +30,9 @@ type Config struct {
 
 type BuildOption func(*Config) error
 
-func NewConfig(vaultExclusive bool) *Config {
+func NewConfig(vh *vaultHelper.VaultHelper) *Config {
 	return &Config{
-		VaultExclusive: vaultExclusive,
+    VaultHelper: vh,
 	}
 }
 
@@ -60,27 +59,21 @@ func Vault(cfg *Config) error {
 }
 
 func Database(cfg *Config) error {
-	vh := cfg.vaultHelper
-	if vh == nil {
-		vh = vaultHelper.NewVault(cfg.Vault.Address, cfg.Vault.Token)
-	}
-
-  if cfg.VaultExclusive {
-    d, err := database.Build(database.Setup(cfg.Vault.Address, cfg.Vault.Token, true, &cfg.VaultPaths), vh)
-    if err != nil {
-      return logs.Errorf("build database: %v", err)
+  d := database.NewSystem()
+  if cfg.VaultHelper != nil {
+    vd := database.VaultDetails{
+      Address: cfg.Vault.Address,
+      Token: cfg.Vault.Token,
     }
-
-    cfg.Database = *d
-    return nil
+    d.Setup(vd, *cfg.VaultHelper)
   }
-
-  d, err := database.Build(database.Setup(cfg.Vault.Address, cfg.Vault.Token, false, nil), vh)
+  db, err := d.Build()
   if err != nil {
-    return logs.Errorf("build database: %v", err)
+    return logs.Errorf("database failed to build: %v", err)
   }
 
-  cfg.Database = *d
+
+  cfg.Database = *db
 
 	return nil
 }
