@@ -16,7 +16,7 @@ type MockVaultHelper struct {
 
 func (m *MockVaultHelper) GetSecrets(path string) error {
 	if path == "" {
-		return fmt.Errorf("path not found")
+		return fmt.Errorf("path not found: %s", path)
 	}
 
 	return nil // or simulate an error if needed
@@ -28,7 +28,7 @@ func (m *MockVaultHelper) GetSecret(key string) (string, error) {
 			return s.Value, nil
 		}
 	}
-	return "", fmt.Errorf("key not found")
+	return "", fmt.Errorf("key not found: %s", key)
 }
 
 func (m *MockVaultHelper) Secrets() []vaultHelper.KVSecret {
@@ -67,6 +67,35 @@ func TestBuildVault(t *testing.T) {
   assert.Equal(t, "testDB", db.DBName)
   assert.Equal(t, "testHost", db.Host)
 }
+
+func TestBuildVaultNoPort(t *testing.T) {
+  mockVault := &MockVaultHelper{
+    KVSecrets: []vaultHelper.KVSecret{
+      {Key: "password", Value: "testPassword"},
+      {Key: "username", Value: "testUser"},
+      {Key: "rds-db", Value: "testDB"},
+      {Key: "rds-hostname", Value: "testHost"},
+    },
+  }
+
+    vd := &VaultDetails{
+      Address: "mockAddress",
+      Token: "mockToken",
+      CredPath: "tester",
+      DetailPath: "tester",
+    }
+    d := NewSystem()
+    d.Setup(*vd, mockVault)
+    db, err := d.Build()
+    assert.NoError(t, err)
+
+    assert.Equal(t, "testPassword", db.Password)
+    assert.Equal(t, "testUser", db.User)
+    assert.Equal(t, 5432, db.Port)
+    assert.Equal(t, "testDB", db.DBName)
+    assert.Equal(t, "testHost", db.Host)
+  }
+
 
 func TestBuildGeneric(t *testing.T) {
   os.Clearenv()

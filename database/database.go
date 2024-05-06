@@ -2,6 +2,8 @@ package database
 
 import (
   "context"
+  "errors"
+  "fmt"
   "strconv"
 	"time"
 
@@ -99,7 +101,12 @@ func (s *System) buildVault() (*Details, error) {
 
   port, err := vh.GetSecret("rds-port")
   if err != nil {
-    return rds, logs.Errorf("failed to get port: %v", err)
+    fmt.Printf("\n\nporterr: %+v\n\n", err)
+
+    if err.Error() != fmt.Sprint("key not found: rds-port") {
+      return rds, logs.Errorf("failed to get port: %v", err)
+    }
+    port = "5432"
   }
   if port != "" {
     iport, err := strconv.Atoi(port)
@@ -117,7 +124,10 @@ func (s *System) buildVault() (*Details, error) {
 
   host, err := vh.GetSecret("rds-hostname")
   if err != nil {
-    return rds, logs.Errorf("failed to get host: %v", err)
+    if err.Error() != fmt.Sprint("key not found: rds-hostname") {
+      return rds, logs.Errorf("failed to get host: %v", err)
+    }
+    host = "db.chewed-k8s.net"
   }
   rds.Host = host
 
