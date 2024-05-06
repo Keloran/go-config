@@ -115,18 +115,32 @@ func (s *System) buildVault() (*Details, error) {
 		return nil, logs.Error("no mongo details found")
 	}
 
-	preCollections, err := vh.GetSecret("collections")
+	hostname, err := vh.GetSecret("mongo-hostname")
+	if err != nil {
+		return nil, logs.Errorf("failed to get hostname: %v", err)
+	}
+	rab.Host = hostname
+
+	database, err := vh.GetSecret("mongo-db")
+	if err != nil {
+		return nil, logs.Errorf("failed to get database: %v", err)
+	}
+	rab.Database = database
+
+	preCollections, err := vh.GetSecret("mongo-collections")
 	if err != nil {
 		return nil, logs.Errorf("failed to get collections: %v", err)
 	}
+	rabCollections := make(map[string]string)
 	collections := strings.Split(preCollections, ",")
 	for _, c := range collections {
 		cols := strings.Split(c, ":")
 		if len(cols) != 2 {
 			return nil, logs.Errorf("collection not in correct format: %v", c)
 		}
-		rab.Collections[cols[0]] = cols[1]
+		rabCollections[cols[0]] = cols[1]
 	}
+	rab.Collections = rabCollections
 
 	s.Details = *rab
 

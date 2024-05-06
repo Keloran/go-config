@@ -105,6 +105,8 @@ func TestDatabase(t *testing.T) {
 		KVSecrets: []vaulthelper.KVSecret{
 			{Key: "password", Value: "testPassword"},
 			{Key: "username", Value: "testUser"},
+			{Key: "rds-hostname", Value: "testHost"},
+			{Key: "rds-db", Value: "testDB"},
 		},
 	}
 
@@ -145,6 +147,9 @@ func TestMongo(t *testing.T) {
 		KVSecrets: []vaulthelper.KVSecret{
 			{Key: "password", Value: "testPassword"},
 			{Key: "username", Value: "testUser"},
+			{Key: "mongo-hostname", Value: "testHost"},
+			{Key: "mongo-collections", Value: "tester:testerCollection"},
+			{Key: "mongo-db", Value: "testDB"},
 		},
 	}
 
