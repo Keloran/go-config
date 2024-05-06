@@ -76,15 +76,8 @@ func TestBuild(t *testing.T) {
 func TestRabbit(t *testing.T) {
 	t.Run("rabbit no set values", func(t *testing.T) {
 		os.Clearenv()
-		mockVault := &MockVaultHelper{
-			KVSecrets: []vaulthelper.KVSecret{
-				{Key: "password", Value: ""},
-				{Key: "username", Value: ""},
-				{Key: "vhost", Value: ""},
-			},
-		}
 
-		cfg, err := BuildLocal(mockVault, Rabbit)
+		cfg, err := BuildLocal(Rabbit)
 		assert.NoError(t, err)
 		assert.Equal(t, "", cfg.Rabbit.Host)
 	})
@@ -92,13 +85,16 @@ func TestRabbit(t *testing.T) {
 		os.Clearenv()
 		mockVault := &MockVaultHelper{
 			KVSecrets: []vaulthelper.KVSecret{
-				{Key: "password", Value: "testPassword"},
-				{Key: "username", Value: "testUser"},
-				{Key: "vhost", Value: "testVhost"},
+				{Key: "rabbit-password", Value: "testPassword"},
+				{Key: "rabbit-username", Value: "testUser"},
+				{Key: "rabbit-vhost", Value: "testVhost"},
+				{Key: "rabbit-hostname", Value: ""},
+				{Key: "rabbit-management-hostname", Value: ""},
+				{Key: "rabbit-queue", Value: ""},
 			},
 		}
 
-		cfg, err := BuildLocal(mockVault, Rabbit)
+		cfg, err := BuildLocalVH(mockVault, Rabbit)
 		assert.NoError(t, err)
 		assert.Equal(t, "testUser", cfg.Rabbit.Username)
 	})
@@ -114,13 +110,13 @@ func TestDatabase(t *testing.T) {
 
 	t.Run("database no set values", func(t *testing.T) {
 		os.Clearenv()
-		cfg, err := BuildLocal(mockVault, Database)
+		cfg, err := BuildLocal(Database)
 		assert.NoError(t, err)
 		assert.Equal(t, "postgres.chewedfeed", cfg.Database.Host)
 	})
 	t.Run("database with values", func(t *testing.T) {
 		os.Clearenv()
-		cfg, err := BuildLocal(mockVault, Database)
+		cfg, err := BuildLocalVH(mockVault, Database)
 		assert.NoError(t, err)
 		assert.Equal(t, "testUser", cfg.Database.User)
 	})
@@ -154,13 +150,13 @@ func TestMongo(t *testing.T) {
 
 	t.Run("mongo no set values", func(t *testing.T) {
 		os.Clearenv()
-		cfg, err := BuildLocal(mockVault, Mongo)
+		cfg, err := BuildLocal(Mongo)
 		assert.NoError(t, err)
 		assert.Equal(t, "localhost", cfg.Mongo.Host)
 	})
 	t.Run("mongo with values", func(t *testing.T) {
 		os.Clearenv()
-		cfg, err := BuildLocal(mockVault, Mongo)
+		cfg, err := BuildLocalVH(mockVault, Mongo)
 		assert.NoError(t, err)
 		assert.Equal(t, "testUser", cfg.Mongo.Username)
 	})

@@ -1,14 +1,13 @@
 package mongo
 
 import (
-	"context"
-	"fmt"
-	"time"
+  "context"
+  "fmt"
+  "time"
 
-	"github.com/bugfixes/go-bugfixes/logs"
-	vaultHelper "github.com/keloran/vault-helper"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+  "github.com/bugfixes/go-bugfixes/logs"
+  "go.mongodb.org/mongo-driver/mongo"
+  "go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type RealMongoOperations struct {
@@ -19,11 +18,13 @@ type RealMongoOperations struct {
 
 func (r *RealMongoOperations) GetMongoClient(ctx context.Context, m System) (*mongo.Client, error) {
 	if time.Now().Unix() > m.VaultDetails.ExpireTime.Unix() {
-		mb, err := Build(m.VaultDetails, vaultHelper.NewVault(m.VaultDetails.Address, m.VaultDetails.Token))
+		mr := NewSystem()
+		mr.Setup(m.VaultDetails, *mr.VaultHelper)
+		_, err := mr.Build()
 		if err != nil {
 			return nil, logs.Errorf("error re-building mongo: %v", err)
 		}
-		m = *mb
+		m = *mr
 	}
 
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(fmt.Sprintf("mongodb://%s:%s@%s", m.Username, m.Password, m.Host)))
@@ -37,11 +38,13 @@ func (r *RealMongoOperations) GetMongoClient(ctx context.Context, m System) (*mo
 
 func (r *RealMongoOperations) GetMongoDatabase(m System) (*mongo.Database, error) {
 	if time.Now().Unix() > m.VaultDetails.ExpireTime.Unix() {
-		mb, err := Build(m.VaultDetails, vaultHelper.NewVault(m.VaultDetails.Address, m.VaultDetails.Token))
+		mr := NewSystem()
+		mr.Setup(m.VaultDetails, *mr.VaultHelper)
+		_, err := mr.Build()
 		if err != nil {
 			return nil, logs.Errorf("error re-building mongo: %v", err)
 		}
-		m = *mb
+		m = *mr
 	}
 
 	r.Database = r.Client.Database(m.Database)
@@ -50,11 +53,13 @@ func (r *RealMongoOperations) GetMongoDatabase(m System) (*mongo.Database, error
 
 func (r *RealMongoOperations) GetMongoCollection(m System, collection string) (*mongo.Collection, error) {
 	if time.Now().Unix() > m.VaultDetails.ExpireTime.Unix() {
-		mb, err := Build(m.VaultDetails, vaultHelper.NewVault(m.VaultDetails.Address, m.VaultDetails.Token))
+		mr := NewSystem()
+		mr.Setup(m.VaultDetails, *mr.VaultHelper)
+		_, err := mr.Build()
 		if err != nil {
 			return nil, logs.Errorf("error re-building mongo: %v", err)
 		}
-		m = *mb
+		m = *mr
 	}
 
 	r.Collection = r.Client.Database(m.Database).Collection(m.Collections[collection])
