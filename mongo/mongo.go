@@ -14,13 +14,17 @@ import (
 )
 
 type VaultDetails struct {
-	Address    string
-	Path       string `env:"MONGO_VAULT_PATH" envDefault:"secret/data/chewedfeed/postgres"`
-	Token      string
+	Address string
+	Token   string
+
+	Path        string `env:"MONGO_VAULT_PATH" envDefault:"secret/data/chewedfeed/mongo"`
+	CredPath    string `env:"MONGO_VAULT_CRED_PATH" envDefault:"secret/data/chewedfeed/mongo"`
+	DetailsPath string `env:"MONGO_VAULT_DETAILS_PATH" envDefault:"secret/data/chewedfeed/details"`
+
 	ExpireTime time.Time
 }
 
-type System struct {
+type Details struct {
 	Host     string `env:"MONGO_HOST" envDefault:"localhost"`
 	Username string `env:"MONGO_USER" envDefault:""`
 	Password string `env:"MONGO_PASS" envDefault:""`
@@ -28,9 +32,17 @@ type System struct {
 
 	Collections map[string]string
 	Collection  string
+}
+
+type System struct {
+	Context context.Context
+
+	Details
+
+	MongoClient MungoClient
 
 	VaultDetails
-	MongoClient MungoClient
+	VaultHelper *vaultHelper.VaultHelper
 }
 
 type MungoOperations interface {
@@ -52,59 +64,103 @@ type MungoClient interface {
 	Connect(ctx context.Context, opts ...*options.ClientOptions) (*mongo.Client, error)
 }
 
-func NewMongo(host, username, password, database string) *System {
+func NewSystem() *System {
 	return &System{
-		Host:     host,
-		Username: username,
-		Password: password,
-		Database: database,
+		Context: context.Background(),
 	}
 }
 
-func Setup(vaultAddress, vaultToken string) VaultDetails {
-	return VaultDetails{
-		Address: vaultAddress,
-		Token:   vaultToken,
-	}
+func (s *System) Setup(vd VaultDetails, vh vaultHelper.VaultHelper) {
+	s.VaultDetails = vd
+	s.VaultHelper = &vh
 }
 
-func Build(vd VaultDetails, vh vaultHelper.VaultHelper) (*System, error) {
-	mungo := NewMongo("", "", "", "")
-	mungo.VaultDetails = vd
-
-	if err := env.Parse(mungo); err != nil {
-		return nil, logs.Errorf("error parsing mongo: %v", err)
+func (s *System) Build() (*Details, error) {
+	if s.VaultHelper != nil {
+		return s.buildVault()
 	}
 
-	// env rather than vault
-	if mungo.Username != "" && mungo.Password != "" {
-		return mungo, nil
-	}
+	return s.buildGeneric()
+}
 
-	if err := vh.GetSecrets(mungo.VaultDetails.Path); err != nil {
-		return nil, logs.Errorf("error getting mongo secrets: %v", err)
-	}
+func (s *System) buildVault() (*Details, error) {
+	rab := &Details{}
+	vh := *s.VaultHelper
 
+	// Credentials
+	if err := vh.GetSecrets(s.VaultDetails.CredPath); err != nil {
+		return nil, logs.Errorf("failed to get mongo secrets: %v", err)
+	}
 	if vh.Secrets() == nil {
-		return nil, logs.Errorf("no secrets found")
+		return nil, logs.Error("no mongo secrets found")
 	}
 
 	username, err := vh.GetSecret("username")
 	if err != nil {
-		return nil, logs.Errorf("error getting username: %v", err)
+		return nil, logs.Errorf("failed to get username: %v", err)
 	}
+	rab.Username = username
 
 	password, err := vh.GetSecret("password")
 	if err != nil {
-		return nil, logs.Errorf("error getting password: %v", err)
+		return nil, logs.Errorf("failed to get password: %v", err)
+	}
+	rab.Password = password
+
+	// Details
+	if err := vh.GetSecrets(s.VaultDetails.DetailsPath); err != nil {
+		return nil, logs.Errorf("failed to get mongo details: %v", err)
+	}
+	if vh.Secrets() == nil {
+		return nil, logs.Error("no mongo details found")
 	}
 
-	mungo.VaultDetails.ExpireTime = time.Now().Add(time.Duration(vh.LeaseDuration()) * time.Second)
-	mungo.Password = password
-	mungo.Username = username
-	mungo.Collections = BuildCollections()
+	hostname, err := vh.GetSecret("mongo-hostname")
+	if err != nil {
+		return nil, logs.Errorf("failed to get hostname: %v", err)
+	}
+	rab.Host = hostname
 
-	return mungo, nil
+	database, err := vh.GetSecret("mongo-db")
+	if err != nil {
+		return nil, logs.Errorf("failed to get database: %v", err)
+	}
+	rab.Database = database
+
+	preCollections, err := vh.GetSecret("mongo-collections")
+	if err != nil {
+		return nil, logs.Errorf("failed to get collections: %v", err)
+	}
+	rabCollections := make(map[string]string)
+	collections := strings.Split(preCollections, ",")
+	for _, c := range collections {
+		cols := strings.Split(c, ":")
+		if len(cols) != 2 {
+			return nil, logs.Errorf("collection not in correct format: %v", c)
+		}
+		rabCollections[cols[0]] = cols[1]
+	}
+	rab.Collections = rabCollections
+
+	s.Details = *rab
+
+	return rab, nil
+
+}
+
+func (s *System) buildGeneric() (*Details, error) {
+	rab := &Details{}
+
+	if err := env.Parse(rab); err != nil {
+		return nil, logs.Errorf("failed to parse env: %v", err)
+	}
+
+	// Build Collections
+	rab.Collections = BuildCollections()
+
+	s.Details = *rab
+
+	return rab, nil
 }
 
 func BuildCollections() map[string]string {
@@ -125,28 +181,4 @@ func BuildCollections() map[string]string {
 	}
 
 	return col
-}
-
-// Deprecated: As of ConfigBuilder v0.5.0, use RealMongoOperations.GetMongoClient
-func GetMongoClient(ctx context.Context, m System) (*mongo.Client, error) {
-	if time.Now().Unix() > m.VaultDetails.ExpireTime.Unix() {
-		mb, err := Build(m.VaultDetails, vaultHelper.NewVault(m.VaultDetails.Address, m.VaultDetails.Token))
-		if err != nil {
-			return nil, logs.Errorf("error building mongo: %v", err)
-		}
-		m = *mb
-	}
-
-	mm := RealMongoOperations{}
-	if _, err := mm.GetMongoClient(ctx, m); err != nil {
-		return nil, logs.Errorf("error getting mongo client: %v", err)
-	}
-	if _, err := mm.GetMongoDatabase(m); err != nil {
-		return nil, logs.Errorf("error getting mongo database: %v", err)
-	}
-	if _, err := mm.GetMongoCollection(m, m.Collection); err != nil {
-		return nil, logs.Errorf("error getting mongo collection: %v", err)
-	}
-
-	return mm.Client, nil
 }

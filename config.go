@@ -14,20 +14,27 @@ import (
 )
 
 type Config struct {
-	vaultHelper vaultHelper.VaultHelper
+	VaultHelper *vaultHelper.VaultHelper
+	VaultPaths  vault.VaultPaths
 
-  Local local.System
-	Vault vault.System
-	Database database.System
+	Local    local.System
+	Vault    vault.System
+	Database database.Details
 	Keycloak keycloak.System
-	Mongo mongo.System
-	Rabbit rabbit.System
+	Mongo    mongo.System
+	Rabbit   rabbit.System
 
-  // Project level properties
+	// Project level properties
 	ProjectProperties map[string]interface{}
 }
 
 type BuildOption func(*Config) error
+
+func NewConfig(vh *vaultHelper.VaultHelper) *Config {
+	return &Config{
+		VaultHelper: vh,
+	}
+}
 
 func Local(cfg *Config) error {
 	l, err := local.Build()
@@ -52,58 +59,74 @@ func Vault(cfg *Config) error {
 }
 
 func Database(cfg *Config) error {
-	vh := cfg.vaultHelper
-	if vh == nil {
-		vh = vaultHelper.NewVault(cfg.Vault.Address, cfg.Vault.Token)
+	d := database.NewSystem()
+	if cfg.VaultHelper != nil {
+		vd := database.VaultDetails{
+			Address: cfg.Vault.Address,
+			Token:   cfg.Vault.Token,
+		}
+		d.Setup(vd, *cfg.VaultHelper)
 	}
-
-	d, err := database.Build(database.Setup(cfg.Vault.Address, cfg.Vault.Token), vh)
+	db, err := d.Build()
 	if err != nil {
-		return logs.Errorf("build database: %v", err)
+		return logs.Errorf("database failed to build: %v", err)
 	}
 
-	cfg.Database = *d
+	cfg.Database = *db
 
 	return nil
 }
 
 func Mongo(cfg *Config) error {
-	vh := cfg.vaultHelper
-	if vh == nil {
-		vh = vaultHelper.NewVault(cfg.Vault.Address, cfg.Vault.Token)
+	m := mongo.NewSystem()
+	if cfg.VaultHelper != nil {
+		vd := mongo.VaultDetails{
+			Address: cfg.Vault.Address,
+			Token:   cfg.Vault.Token,
+		}
+		m.Setup(vd, *cfg.VaultHelper)
 	}
-
-	m, err := mongo.Build(mongo.Setup(cfg.Vault.Address, cfg.Vault.Token), vh)
+	_, err := m.Build()
 	if err != nil {
-		return logs.Errorf("build mongo: %v", err)
+		return logs.Errorf("failed to build mongo: %v", err)
 	}
-
 	cfg.Mongo = *m
 
 	return nil
 }
 
 func Keycloak(cfg *Config) error {
-	k, err := keycloak.Build()
-	if err != nil {
-		return logs.Errorf("build keycloak: %v", err)
+	k := keycloak.NewSystem()
+	if cfg.VaultHelper != nil {
+		vd := keycloak.VaultDetails{
+			Address: cfg.Vault.Address,
+			Token:   cfg.Vault.Token,
+		}
+		k.Setup(vd, *cfg.VaultHelper)
 	}
 
+	_, err := k.Build()
+	if err != nil {
+		return logs.Errorf("failed to build keycloak: %v", err)
+	}
 	cfg.Keycloak = *k
-
 	return nil
 }
 
 func Rabbit(cfg *Config) error {
-	vh := cfg.vaultHelper
-	if vh == nil {
-		vh = vaultHelper.NewVault(cfg.Vault.Address, cfg.Vault.Token)
+	r := rabbit.NewSystem(&http.Client{})
+	if cfg.VaultHelper != nil {
+		vd := rabbit.VaultDetails{
+			Address: cfg.Vault.Address,
+			Token:   cfg.Vault.Token,
+		}
+		r.Setup(vd, *cfg.VaultHelper)
+	}
+	_, err := r.Build()
+	if err != nil {
+		return logs.Errorf("failed to build rabbit: %v", err)
 	}
 
-	r, err := rabbit.Build(rabbit.Setup(cfg.Vault.Address, cfg.Vault.Token), vh, &http.Client{})
-	if err != nil {
-		return logs.Errorf("build rabbit: %v", err)
-	}
 	cfg.Rabbit = *r
 
 	return nil
@@ -118,10 +141,21 @@ func Build(opts ...BuildOption) (*Config, error) {
 	return cfg, nil
 }
 
-func BuildLocal(mockVault vaultHelper.VaultHelper, opts ...BuildOption) (*Config, error) {
+func BuildLocal(opts ...BuildOption) (*Config, error) {
 	cfg := &Config{}
 
-	cfg.vaultHelper = mockVault
+	if err := cfg.Build(opts...); err != nil {
+		return nil, logs.Errorf("build config: %v", err)
+	}
+
+	return cfg, nil
+}
+
+func BuildLocalVH(mockVault vaultHelper.VaultHelper, opts ...BuildOption) (*Config, error) {
+	cfg := &Config{
+		VaultHelper: &mockVault,
+	}
+
 	if err := cfg.Build(opts...); err != nil {
 		return nil, logs.Errorf("build config: %v", err)
 	}

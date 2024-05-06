@@ -23,109 +23,135 @@ type VaultHelper interface {
 }
 
 type VaultDetails struct {
-	Address    string
-	Path       string `env:"RABBIT_VAULT_PATH" envDefault:"secret/data/chewedfeed/rabbitmq"`
-	Token      string
+	Address string
+	Token   string
+
+	CredPath    string `env:"RABBIT_VAULT_CREDS_PATH" envDefault:"secrets/data/chewedfeed/rabbitmq"`
+	DetailsPath string `env:"RABBIT_VAULT_DETAILS_PATH" envDefault:"secrets/data/chewedfeed/details"`
+
 	ExpireTime time.Time
 }
 
-type System struct {
+type Details struct {
 	Host           string `env:"RABBIT_HOSTNAME" envDefault:"" json:"host,omitempty"`
 	ManagementHost string `env:"RABBIT_MANAGEMENT_HOSTNAME" envDefault:"" json:"management_host,omitempty"`
-	Port           int    `env:"RABBIT_PORT" envDefault:"" json:"port,omitempty"`
 	Username       string `env:"RABBIT_USERNAME" envDefault:"" json:"username,omitempty"`
 	Password       string `env:"RABBIT_PASSWORD" envDefault:"" json:"password,omitempty"`
 	VHost          string `env:"RABBIT_VHOST" envDefault:"" json:"vhost,omitempty"`
 	Queue          string `env:"RABBIT_QUEUE" envDefault:"" json:"queue,omitempty"`
+}
+
+type System struct {
+	Context context.Context
+
+	Details
+
+	HTTPClient
 
 	VaultDetails
-	HTTPClient
-	VaultHelper
+	VaultHelper *vaulthelper.VaultHelper
 }
 
-func NewRabbit(port int, host, username, password, vhost, management string, httpClient HTTPClient, vaultHelper VaultHelper) *System {
+func NewSystem(httpClient HTTPClient) *System {
 	return &System{
-		Host:           host,
-		Port:           port,
-		Username:       username,
-		Password:       password,
-		VHost:          vhost,
-		ManagementHost: management,
-
-		HTTPClient:  httpClient,
-		VaultHelper: vaultHelper,
+		Context:    context.Background(),
+		HTTPClient: httpClient,
 	}
 }
 
-func Setup(vaultAddress, vaultToken string) VaultDetails {
-	return VaultDetails{
-		Address: vaultAddress,
-		Token:   vaultToken,
-	}
+func (s *System) Setup(vd VaultDetails, vh vaulthelper.VaultHelper) {
+	s.VaultDetails = vd
+	s.VaultHelper = &vh
 }
 
-func Build(vd VaultDetails, vh vaulthelper.VaultHelper, httpClient HTTPClient) (*System, error) {
-	r := NewRabbit(0, "", "", "", "", "", httpClient, vh)
-
-	if err := env.Parse(r); err != nil {
-		return nil, logs.Errorf("rabbit: unable to parse rabbit: %v", err)
+func (s *System) Build() (*Details, error) {
+	if s.VaultHelper != nil {
+		return s.buildVault()
 	}
 
-	// env rather than vault
-	if r.Username != "" && r.Password != "" {
-		return r, nil
-	}
+	return s.buildGeneric()
+}
 
-	if err := vh.GetSecrets(vd.Path); err != nil {
-		return nil, logs.Errorf("rabbit: unable to get secrets: %v", err)
+func (s *System) buildGeneric() (*Details, error) {
+	rab := &Details{}
+
+	if err := env.Parse(rab); err != nil {
+		return nil, logs.Errorf("failed to parse env: %v", err)
+	}
+	s.Details = *rab
+
+	return rab, nil
+}
+
+func (s *System) buildVault() (*Details, error) {
+	rab := &Details{}
+	vh := *s.VaultHelper
+
+	if err := vh.GetSecrets(s.VaultDetails.DetailsPath); err != nil {
+		return rab, logs.Errorf("failed to get rabbit secrets from vault: %v", err)
 	}
 	if vh.Secrets() == nil {
-		return nil, logs.Error("rabbit: no secrets found")
-	}
-	if username, err := vh.GetSecret("username"); err == nil {
-		r.Username = username
-	} else {
-		return nil, logs.Errorf("rabbit: unable to get username: %v", err)
-	}
-	if password, err := vh.GetSecret("password"); err == nil {
-		r.Password = password
-	} else {
-		return nil, logs.Errorf("rabbit: unable to get password: %v", err)
-	}
-	if vhost, err := vh.GetSecret("vhost"); err == nil {
-		r.VHost = vhost
-	} else {
-		return nil, logs.Errorf("rabbit: unable to get vhost: %v", err)
+		return rab, logs.Error("no rabbit secrets found")
 	}
 
-	r.VaultDetails.ExpireTime = time.Now().Add(time.Duration(vh.LeaseDuration()) * time.Second)
+	username, err := vh.GetSecret("rabbit-username")
+	if err != nil {
+		return rab, logs.Errorf("failed to get username: %v", err)
+	}
+	rab.Username = username
 
-	return r, nil
+	password, err := vh.GetSecret("rabbit-password")
+	if err != nil {
+		return rab, logs.Errorf("failed to get password: %v", err)
+	}
+	rab.Password = password
+
+	host, err := vh.GetSecret("rabbit-hostname")
+	if err != nil {
+		return rab, logs.Errorf("failed to get hostname: %v", err)
+	}
+	rab.Host = host
+
+	vhost, err := vh.GetSecret("rabbit-vhost")
+	if err != nil {
+		return rab, logs.Errorf("failed to get vhost: %v", err)
+	}
+	rab.VHost = vhost
+
+	management, err := vh.GetSecret("rabbit-management-hostname")
+	if err != nil {
+		return rab, logs.Errorf("failed to get management host: %v", err)
+	}
+	rab.ManagementHost = management
+
+	queue, err := vh.GetSecret("rabbit-queue")
+	if err != nil {
+		return rab, logs.Errorf("failed to get queue: %v", err)
+	}
+	rab.Queue = queue
+	s.Details = *rab
+
+	return rab, nil
 }
 
-func GetRabbitQueue(ctx context.Context, r System) (interface{}, error) {
-	if ctx == nil {
-		ctx = context.Background()
-	}
-
-	if time.Now().Unix() > r.VaultDetails.ExpireTime.Unix() {
-		rb, err := Build(r.VaultDetails, vaulthelper.NewVault(r.VaultDetails.Address, r.VaultDetails.Token), r.HTTPClient)
+func (s *System) GetRabbitQueue() (interface{}, error) {
+	if time.Now().Unix() > s.VaultDetails.ExpireTime.Unix() {
+		_, err := s.Build()
 		if err != nil {
 			return nil, logs.Errorf("rabbit: unable to build rabbit: %v", err)
 		}
-		r = *rb
 	}
 
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/api/queues/%s/%s/get", r.Host, r.VHost, r.Queue), nil)
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/api/queues/%s/%s/get", s.Details.Host, s.Details.VHost, s.Details.Queue), nil)
 	if err != nil {
 		return nil, logs.Errorf("rabbit: unable to create request: %v", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
-	req.SetBasicAuth(r.Username, r.Password)
+	req.SetBasicAuth(s.Details.Username, s.Details.Password)
 
-	res, err := r.HTTPClient.Do(req)
+	res, err := s.HTTPClient.Do(req)
 	if err != nil {
 		return nil, logs.Errorf("rabbit: unable to get queue: %v", err)
 	}

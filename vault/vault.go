@@ -10,6 +10,19 @@ import (
 	"github.com/caarlos0/env/v8"
 )
 
+type VaultPath struct {
+  Details     string
+  Credentials string
+}
+
+type VaultPaths struct {
+  Database VaultPath
+  Keycloak VaultPath
+  Mongo    VaultPath
+  Rabbit   VaultPath
+  Influx   VaultPath
+}
+
 // System is the vault config
 type System struct {
 	Host       string `env:"VAULT_HOST" envDefault:"localhost"`

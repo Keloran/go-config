@@ -10,254 +10,254 @@
 package mongo
 
 import (
-  context "context"
-  reflect "reflect"
+	context "context"
+	reflect "reflect"
 
-  mongo0 "go.mongodb.org/mongo-driver/mongo"
-  options "go.mongodb.org/mongo-driver/mongo/options"
-  gomock "go.uber.org/mock/gomock"
+	mongo0 "go.mongodb.org/mongo-driver/mongo"
+	options "go.mongodb.org/mongo-driver/mongo/options"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockMungoOperations is a mock of MungoOperations interface.
 type MockMungoOperations struct {
-  ctrl     *gomock.Controller
-  recorder *MockMungoOperationsMockRecorder
+	ctrl     *gomock.Controller
+	recorder *MockMungoOperationsMockRecorder
 }
 
 // MockMungoOperationsMockRecorder is the mock recorder for MockMungoOperations.
 type MockMungoOperationsMockRecorder struct {
-  mock *MockMungoOperations
+	mock *MockMungoOperations
 }
 
 // NewMockMungoOperations creates a new mock instance.
 func NewMockMungoOperations(ctrl *gomock.Controller) *MockMungoOperations {
-  mock := &MockMungoOperations{ctrl: ctrl}
-  mock.recorder = &MockMungoOperationsMockRecorder{mock}
-  return mock
+	mock := &MockMungoOperations{ctrl: ctrl}
+	mock.recorder = &MockMungoOperationsMockRecorder{mock}
+	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockMungoOperations) EXPECT() *MockMungoOperationsMockRecorder {
-  return m.recorder
+	return m.recorder
 }
 
 // DeleteMany mocks base method.
 func (m *MockMungoOperations) DeleteMany(ctx context.Context, filter any) (*mongo0.DeleteResult, error) {
-  m.ctrl.T.Helper()
-  ret := m.ctrl.Call(m, "DeleteMany", ctx, filter)
-  ret0, _ := ret[0].(*mongo0.DeleteResult)
-  ret1, _ := ret[1].(error)
-  return ret0, ret1
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteMany", ctx, filter)
+	ret0, _ := ret[0].(*mongo0.DeleteResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // DeleteMany indicates an expected call of DeleteMany.
 func (mr *MockMungoOperationsMockRecorder) DeleteMany(ctx, filter any) *gomock.Call {
-  mr.mock.ctrl.T.Helper()
-  return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteMany", reflect.TypeOf((*MockMungoOperations)(nil).DeleteMany), ctx, filter)
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteMany", reflect.TypeOf((*MockMungoOperations)(nil).DeleteMany), ctx, filter)
 }
 
 // DeleteOne mocks base method.
 func (m *MockMungoOperations) DeleteOne(ctx context.Context, filter any) (*mongo0.DeleteResult, error) {
-  m.ctrl.T.Helper()
-  ret := m.ctrl.Call(m, "DeleteOne", ctx, filter)
-  ret0, _ := ret[0].(*mongo0.DeleteResult)
-  ret1, _ := ret[1].(error)
-  return ret0, ret1
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteOne", ctx, filter)
+	ret0, _ := ret[0].(*mongo0.DeleteResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // DeleteOne indicates an expected call of DeleteOne.
 func (mr *MockMungoOperationsMockRecorder) DeleteOne(ctx, filter any) *gomock.Call {
-  mr.mock.ctrl.T.Helper()
-  return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOne", reflect.TypeOf((*MockMungoOperations)(nil).DeleteOne), ctx, filter)
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOne", reflect.TypeOf((*MockMungoOperations)(nil).DeleteOne), ctx, filter)
 }
 
 // Disconnect mocks base method.
 func (m *MockMungoOperations) Disconnect(ctx context.Context) error {
-  m.ctrl.T.Helper()
-  ret := m.ctrl.Call(m, "Disconnect", ctx)
-  ret0, _ := ret[0].(error)
-  return ret0
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Disconnect", ctx)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // Disconnect indicates an expected call of Disconnect.
 func (mr *MockMungoOperationsMockRecorder) Disconnect(ctx any) *gomock.Call {
-  mr.mock.ctrl.T.Helper()
-  return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Disconnect", reflect.TypeOf((*MockMungoOperations)(nil).Disconnect), ctx)
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Disconnect", reflect.TypeOf((*MockMungoOperations)(nil).Disconnect), ctx)
 }
 
 // Find mocks base method.
 func (m *MockMungoOperations) Find(ctx context.Context, filter any) (*mongo0.Cursor, error) {
-  m.ctrl.T.Helper()
-  ret := m.ctrl.Call(m, "Find", ctx, filter)
-  ret0, _ := ret[0].(*mongo0.Cursor)
-  ret1, _ := ret[1].(error)
-  return ret0, ret1
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Find", ctx, filter)
+	ret0, _ := ret[0].(*mongo0.Cursor)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // Find indicates an expected call of Find.
 func (mr *MockMungoOperationsMockRecorder) Find(ctx, filter any) *gomock.Call {
-  mr.mock.ctrl.T.Helper()
-  return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Find", reflect.TypeOf((*MockMungoOperations)(nil).Find), ctx, filter)
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Find", reflect.TypeOf((*MockMungoOperations)(nil).Find), ctx, filter)
 }
 
 // FindOne mocks base method.
 func (m *MockMungoOperations) FindOne(ctx context.Context, filter any) *mongo0.SingleResult {
-  m.ctrl.T.Helper()
-  ret := m.ctrl.Call(m, "FindOne", ctx, filter)
-  ret0, _ := ret[0].(*mongo0.SingleResult)
-  return ret0
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindOne", ctx, filter)
+	ret0, _ := ret[0].(*mongo0.SingleResult)
+	return ret0
 }
 
 // FindOne indicates an expected call of FindOne.
 func (mr *MockMungoOperationsMockRecorder) FindOne(ctx, filter any) *gomock.Call {
-  mr.mock.ctrl.T.Helper()
-  return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindOne", reflect.TypeOf((*MockMungoOperations)(nil).FindOne), ctx, filter)
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindOne", reflect.TypeOf((*MockMungoOperations)(nil).FindOne), ctx, filter)
 }
 
 // GetMongoClient mocks base method.
 func (m_2 *MockMungoOperations) GetMongoClient(ctx context.Context, m System) (*mongo0.Client, error) {
-  m_2.ctrl.T.Helper()
-  ret := m_2.ctrl.Call(m_2, "GetMongoClient", ctx, m)
-  ret0, _ := ret[0].(*mongo0.Client)
-  ret1, _ := ret[1].(error)
-  return ret0, ret1
+	m_2.ctrl.T.Helper()
+	ret := m_2.ctrl.Call(m_2, "GetMongoClient", ctx, m)
+	ret0, _ := ret[0].(*mongo0.Client)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // GetMongoClient indicates an expected call of GetMongoClient.
 func (mr *MockMungoOperationsMockRecorder) GetMongoClient(ctx, m any) *gomock.Call {
-  mr.mock.ctrl.T.Helper()
-  return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMongoClient", reflect.TypeOf((*MockMungoOperations)(nil).GetMongoClient), ctx, m)
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMongoClient", reflect.TypeOf((*MockMungoOperations)(nil).GetMongoClient), ctx, m)
 }
 
 // GetMongoCollection mocks base method.
 func (m_2 *MockMungoOperations) GetMongoCollection(m System, collection string) (*mongo0.Collection, error) {
-  m_2.ctrl.T.Helper()
-  ret := m_2.ctrl.Call(m_2, "GetMongoCollection", m, collection)
-  ret0, _ := ret[0].(*mongo0.Collection)
-  ret1, _ := ret[1].(error)
-  return ret0, ret1
+	m_2.ctrl.T.Helper()
+	ret := m_2.ctrl.Call(m_2, "GetMongoCollection", m, collection)
+	ret0, _ := ret[0].(*mongo0.Collection)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // GetMongoCollection indicates an expected call of GetMongoCollection.
 func (mr *MockMungoOperationsMockRecorder) GetMongoCollection(m, collection any) *gomock.Call {
-  mr.mock.ctrl.T.Helper()
-  return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMongoCollection", reflect.TypeOf((*MockMungoOperations)(nil).GetMongoCollection), m, collection)
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMongoCollection", reflect.TypeOf((*MockMungoOperations)(nil).GetMongoCollection), m, collection)
 }
 
 // GetMongoDatabase mocks base method.
 func (m_2 *MockMungoOperations) GetMongoDatabase(m System) (*mongo0.Database, error) {
-  m_2.ctrl.T.Helper()
-  ret := m_2.ctrl.Call(m_2, "GetMongoDatabase", m)
-  ret0, _ := ret[0].(*mongo0.Database)
-  ret1, _ := ret[1].(error)
-  return ret0, ret1
+	m_2.ctrl.T.Helper()
+	ret := m_2.ctrl.Call(m_2, "GetMongoDatabase", m)
+	ret0, _ := ret[0].(*mongo0.Database)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // GetMongoDatabase indicates an expected call of GetMongoDatabase.
 func (mr *MockMungoOperationsMockRecorder) GetMongoDatabase(m any) *gomock.Call {
-  mr.mock.ctrl.T.Helper()
-  return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMongoDatabase", reflect.TypeOf((*MockMungoOperations)(nil).GetMongoDatabase), m)
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMongoDatabase", reflect.TypeOf((*MockMungoOperations)(nil).GetMongoDatabase), m)
 }
 
 // InsertMany mocks base method.
 func (m *MockMungoOperations) InsertMany(ctx context.Context, documents []any) (*mongo0.InsertManyResult, error) {
-  m.ctrl.T.Helper()
-  ret := m.ctrl.Call(m, "InsertMany", ctx, documents)
-  ret0, _ := ret[0].(*mongo0.InsertManyResult)
-  ret1, _ := ret[1].(error)
-  return ret0, ret1
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InsertMany", ctx, documents)
+	ret0, _ := ret[0].(*mongo0.InsertManyResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // InsertMany indicates an expected call of InsertMany.
 func (mr *MockMungoOperationsMockRecorder) InsertMany(ctx, documents any) *gomock.Call {
-  mr.mock.ctrl.T.Helper()
-  return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertMany", reflect.TypeOf((*MockMungoOperations)(nil).InsertMany), ctx, documents)
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertMany", reflect.TypeOf((*MockMungoOperations)(nil).InsertMany), ctx, documents)
 }
 
 // InsertOne mocks base method.
 func (m *MockMungoOperations) InsertOne(ctx context.Context, document any) (*mongo0.InsertOneResult, error) {
-  m.ctrl.T.Helper()
-  ret := m.ctrl.Call(m, "InsertOne", ctx, document)
-  ret0, _ := ret[0].(*mongo0.InsertOneResult)
-  ret1, _ := ret[1].(error)
-  return ret0, ret1
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InsertOne", ctx, document)
+	ret0, _ := ret[0].(*mongo0.InsertOneResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // InsertOne indicates an expected call of InsertOne.
 func (mr *MockMungoOperationsMockRecorder) InsertOne(ctx, document any) *gomock.Call {
-  mr.mock.ctrl.T.Helper()
-  return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertOne", reflect.TypeOf((*MockMungoOperations)(nil).InsertOne), ctx, document)
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertOne", reflect.TypeOf((*MockMungoOperations)(nil).InsertOne), ctx, document)
 }
 
 // UpdateMany mocks base method.
 func (m *MockMungoOperations) UpdateMany(ctx context.Context, filter, update any) (*mongo0.UpdateResult, error) {
-  m.ctrl.T.Helper()
-  ret := m.ctrl.Call(m, "UpdateMany", ctx, filter, update)
-  ret0, _ := ret[0].(*mongo0.UpdateResult)
-  ret1, _ := ret[1].(error)
-  return ret0, ret1
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateMany", ctx, filter, update)
+	ret0, _ := ret[0].(*mongo0.UpdateResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // UpdateMany indicates an expected call of UpdateMany.
 func (mr *MockMungoOperationsMockRecorder) UpdateMany(ctx, filter, update any) *gomock.Call {
-  mr.mock.ctrl.T.Helper()
-  return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateMany", reflect.TypeOf((*MockMungoOperations)(nil).UpdateMany), ctx, filter, update)
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateMany", reflect.TypeOf((*MockMungoOperations)(nil).UpdateMany), ctx, filter, update)
 }
 
 // UpdateOne mocks base method.
 func (m *MockMungoOperations) UpdateOne(ctx context.Context, filter, update any) (*mongo0.UpdateResult, error) {
-  m.ctrl.T.Helper()
-  ret := m.ctrl.Call(m, "UpdateOne", ctx, filter, update)
-  ret0, _ := ret[0].(*mongo0.UpdateResult)
-  ret1, _ := ret[1].(error)
-  return ret0, ret1
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateOne", ctx, filter, update)
+	ret0, _ := ret[0].(*mongo0.UpdateResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // UpdateOne indicates an expected call of UpdateOne.
 func (mr *MockMungoOperationsMockRecorder) UpdateOne(ctx, filter, update any) *gomock.Call {
-  mr.mock.ctrl.T.Helper()
-  return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateOne", reflect.TypeOf((*MockMungoOperations)(nil).UpdateOne), ctx, filter, update)
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateOne", reflect.TypeOf((*MockMungoOperations)(nil).UpdateOne), ctx, filter, update)
 }
 
 // MockMungoClient is a mock of MungoClient interface.
 type MockMungoClient struct {
-  ctrl     *gomock.Controller
-  recorder *MockMungoClientMockRecorder
+	ctrl     *gomock.Controller
+	recorder *MockMungoClientMockRecorder
 }
 
 // MockMungoClientMockRecorder is the mock recorder for MockMungoClient.
 type MockMungoClientMockRecorder struct {
-  mock *MockMungoClient
+	mock *MockMungoClient
 }
 
 // NewMockMungoClient creates a new mock instance.
 func NewMockMungoClient(ctrl *gomock.Controller) *MockMungoClient {
-  mock := &MockMungoClient{ctrl: ctrl}
-  mock.recorder = &MockMungoClientMockRecorder{mock}
-  return mock
+	mock := &MockMungoClient{ctrl: ctrl}
+	mock.recorder = &MockMungoClientMockRecorder{mock}
+	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockMungoClient) EXPECT() *MockMungoClientMockRecorder {
-  return m.recorder
+	return m.recorder
 }
 
 // Connect mocks base method.
 func (m *MockMungoClient) Connect(ctx context.Context, opts ...*options.ClientOptions) (*mongo0.Client, error) {
-  m.ctrl.T.Helper()
-  varargs := []any{ctx}
-  for _, a := range opts {
-    varargs = append(varargs, a)
-  }
-  ret := m.ctrl.Call(m, "Connect", varargs...)
-  ret0, _ := ret[0].(*mongo0.Client)
-  ret1, _ := ret[1].(error)
-  return ret0, ret1
+	m.ctrl.T.Helper()
+	varargs := []any{ctx}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Connect", varargs...)
+	ret0, _ := ret[0].(*mongo0.Client)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // Connect indicates an expected call of Connect.
 func (mr *MockMungoClientMockRecorder) Connect(ctx any, opts ...any) *gomock.Call {
-  mr.mock.ctrl.T.Helper()
-  varargs := append([]any{ctx}, opts...)
-  return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Connect", reflect.TypeOf((*MockMungoClient)(nil).Connect), varargs...)
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Connect", reflect.TypeOf((*MockMungoClient)(nil).Connect), varargs...)
 }

@@ -2,13 +2,11 @@ package rabbit
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"testing"
-	"time"
 
 	vaulthelper "github.com/keloran/vault-helper"
 	"github.com/stretchr/testify/assert"
@@ -17,7 +15,7 @@ import (
 type MockHTTPClient struct{}
 
 func (m *MockHTTPClient) Do(req *http.Request) (*http.Response, error) {
-	if req.URL.Path == "/api/queues/testVhost/testQueue/get" {
+	if req.URL.Path == "testHost/api/queues/testVHost/testQueue/get" {
 		response := `[
 			{"payload":"test message","payload_bytes":12,"redelivered":false}
 		]`
@@ -61,96 +59,84 @@ func (m *MockVaultHelper) LeaseDuration() int {
 	return m.Lease
 }
 
-func TestBuild(t *testing.T) {
-	t.Run("default values", func(t *testing.T) {
-		os.Clearenv()
+func TestVaultBuild(t *testing.T) {
+	mockVault := &MockVaultHelper{
+		KVSecrets: []vaulthelper.KVSecret{
+			{Key: "rabbit-hostname", Value: "testHost"},
+			{Key: "rabbit-management-hostname", Value: "testManagementHost"},
+			{Key: "rabbit-username", Value: "testUsername"},
+			{Key: "rabbit-password", Value: "testPassword"},
+			{Key: "rabbit-vhost", Value: "testVHost"},
+			{Key: "rabbit-queue", Value: "testQueue"},
+		},
+	}
 
-		mockVault := &MockVaultHelper{
-			KVSecrets: []vaulthelper.KVSecret{
-				{Key: "password", Value: ""},
-				{Key: "username", Value: ""},
-				{Key: "vhost", Value: ""},
-			},
-		}
-		vd := Setup("mockAddress", "mockToken")
+	vd := &VaultDetails{
+		Address:     "mockAddress",
+		Token:       "mockToken",
+		DetailsPath: "tester",
+	}
 
-		l, err := Build(vd, mockVault, &MockHTTPClient{})
-		assert.NoError(t, err)
-		assert.Equal(t, "", l.Host)
-		assert.Equal(t, 0, l.Port)
-		assert.Equal(t, "", l.Username)
-		assert.Equal(t, "", l.Password)
-		assert.Equal(t, "", l.VHost)
-		assert.Equal(t, "", l.ManagementHost)
-	})
+	mockHTTPClient := &MockHTTPClient{}
 
-	t.Run("with values", func(t *testing.T) {
-		mockVault := &MockVaultHelper{
-			KVSecrets: []vaulthelper.KVSecret{
-				{Key: "password", Value: "testPassword"},
-				{Key: "username", Value: "testUser"},
-				{Key: "vhost", Value: "testVhost"},
-			},
-		}
+	d := NewSystem(mockHTTPClient)
+	d.Setup(*vd, mockVault)
+	rab, err := d.Build()
+	assert.NoError(t, err)
 
-		vd := Setup("mockAddress", "mockToken")
+	assert.Equal(t, "testUsername", rab.Username)
+	assert.Equal(t, "testPassword", rab.Password)
+	assert.Equal(t, "testHost", rab.Host)
+	assert.Equal(t, "testManagementHost", rab.ManagementHost)
+	assert.Equal(t, "testVHost", rab.VHost)
+	assert.Equal(t, "testQueue", rab.Queue)
+}
 
-		os.Clearenv()
-		if err := os.Setenv("RABBIT_HOSTNAME", "http://localhost"); err != nil {
-			assert.NoError(t, err)
-		}
-		r, err := Build(vd, mockVault, &MockHTTPClient{})
-		assert.NoError(t, err)
-		assert.Equal(t, "http://localhost", r.Host)
-	})
+func TestGenericBuild(t *testing.T) {
+	os.Clearenv()
+
+	if err := os.Setenv("RABBIT_HOSTNAME", "testHost"); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Setenv("RABBIT_USERNAME", "testUsername"); err != nil {
+		t.Fatal(err)
+	}
+
+	mockHTTPClient := &MockHTTPClient{}
+	d := NewSystem(mockHTTPClient)
+	rab, err := d.Build()
+	assert.NoError(t, err)
+
+	assert.Equal(t, "testHost", rab.Host)
+	assert.Equal(t, "testUsername", rab.Username)
 }
 
 func TestGetRabbitQueue(t *testing.T) {
-	t.Run("successful queue retrieval", func(t *testing.T) {
-		mockHTTPClient := &MockHTTPClient{}
-		mockVaultHelper := &MockVaultHelper{}
+	mockVault := &MockVaultHelper{
+		KVSecrets: []vaulthelper.KVSecret{
+			{Key: "rabbit-hostname", Value: "testHost"},
+			{Key: "rabbit-management-hostname", Value: "testManagementHost"},
+			{Key: "rabbit-username", Value: "testUsername"},
+			{Key: "rabbit-password", Value: "testPassword"},
+			{Key: "rabbit-vhost", Value: "testVHost"},
+			{Key: "rabbit-queue", Value: "testQueue"},
+		},
+	}
 
-		// Setup Rabbit instance with mocks
-		rabbit := System{
-			Host:        "http://localhost",
-			Username:    "testUser",
-			Password:    "testPassword",
-			VHost:       "testVhost",
-			Queue:       "testQueue",
-			HTTPClient:  mockHTTPClient,
-			VaultHelper: mockVaultHelper,
-			VaultDetails: VaultDetails{
-				ExpireTime: time.Now().Add(time.Hour),
-			},
-		}
+	vd := &VaultDetails{
+		Address:     "mockAddress",
+		Token:       "mockToken",
+		DetailsPath: "tester",
+	}
 
-		// Test GetRabbitQueue
-		result, err := GetRabbitQueue(context.Background(), rabbit)
-		assert.NoError(t, err)
-		assert.NotNil(t, result)
-	})
+	mockHTTPClient := &MockHTTPClient{}
 
-	t.Run("queue retrieval failure", func(t *testing.T) {
-		mockHTTPClient := &MockHTTPClient{}
-		mockVaultHelper := &MockVaultHelper{}
+	d := NewSystem(mockHTTPClient)
+	d.Setup(*vd, mockVault)
+	_, err := d.Build()
+	assert.NoError(t, err)
 
-		// Setup Rabbit instance with mocks and an invalid queue name to simulate failure
-		rabbit := System{
-			Host:        "http://localhost",
-			Username:    "testUser",
-			Password:    "testPassword",
-			VHost:       "testVhost",
-			Queue:       "invalidQueue",
-			HTTPClient:  mockHTTPClient,
-			VaultHelper: mockVaultHelper,
-			VaultDetails: VaultDetails{
-				ExpireTime: time.Now().Add(time.Hour),
-			},
-		}
-
-		// Test GetRabbitQueue
-		result, err := GetRabbitQueue(context.Background(), rabbit)
-		assert.Error(t, err)
-		assert.Nil(t, result)
-	})
+	result, err := d.GetRabbitQueue()
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
 }
