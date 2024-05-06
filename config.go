@@ -95,31 +95,37 @@ func Mongo(cfg *Config) error {
 }
 
 func Keycloak(cfg *Config) error {
-  vh := cfg.vaultHelper
-  if vh == nil {
-    vh = vaultHelper.NewVault(cfg.Vault.Address, cfg.Vault.Token)
+  k := keycloak.NewSystem()
+  if cfg.VaultHelper != nil {
+    vd := keycloak.VaultDetails{
+      Address: cfg.Vault.Address,
+      Token: cfg.Vault.Token,
+    }
+    k.Setup(vd, *cfg.VaultHelper)
   }
 
-  k, err := keycloak.Build(keycloak.Setup(cfg.Vault.Address, cfg.Vault.Token, cfg.VaultExclusive), vh)
-	if err != nil {
-		return logs.Errorf("build keycloak: %v", err)
-	}
-
-	cfg.Keycloak = *k
-
+  _, err := k.Build()
+  if err != nil {
+    return logs.Errorf("failed to build keycloak: %v", err)
+  }
+  cfg.Keycloak = *k
 	return nil
 }
 
 func Rabbit(cfg *Config) error {
-	vh := cfg.vaultHelper
-	if vh == nil {
-		vh = vaultHelper.NewVault(cfg.Vault.Address, cfg.Vault.Token)
-	}
+  r := rabbit.NewSystem(&http.Client{})
+  if cfg.VaultHelper != nil {
+    vd := rabbit.VaultDetails{
+      Address: cfg.Vault.Address,
+      Token: cfg.Vault.Token,
+    }
+    r.Setup(vd, *cfg.VaultHelper)
+  }
+  _, err := r.Build()
+  if err != nil {
+    return logs.Errorf("failed to build rabbit: %v", err)
+  }
 
-	r, err := rabbit.Build(rabbit.Setup(cfg.Vault.Address, cfg.Vault.Token, cfg.VaultExclusive), vh, &http.Client{})
-	if err != nil {
-		return logs.Errorf("build rabbit: %v", err)
-	}
 	cfg.Rabbit = *r
 
 	return nil
