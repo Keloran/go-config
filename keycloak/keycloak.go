@@ -92,6 +92,7 @@ func (s *System) buildVault() (*Details, error) {
   }
   key.Host = host
 
+  s.Details = *key
   return key, nil
 }
 
@@ -101,6 +102,7 @@ func (s *System) buildGeneric() (*Details, error) {
     return nil, logs.Errorf("failed to build generic: %v", err)
   }
 
+  s.Details = *key
   return key, nil
 }
 

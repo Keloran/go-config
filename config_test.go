@@ -129,7 +129,7 @@ func TestKeycloak(t *testing.T) {
 		os.Clearenv()
 		cfg, err := Build(Keycloak)
 		assert.NoError(t, err)
-		assert.Equal(t, "", cfg.Keycloak.Host)
+		assert.Equal(t, "https://keys.chewedfeed.com", cfg.Keycloak.Host)
 	})
 }
 

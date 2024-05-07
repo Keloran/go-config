@@ -31,7 +31,7 @@ func Build() (*System, error) {
 	if err := env.Parse(l); err != nil {
 		return l, logs.Errorf("failed to parse local config: %v", err)
 	}
-
+  
 	l.getAllEnvironment()
 
 	return l, nil
