@@ -44,10 +44,7 @@ func TestBuildGeneric(t *testing.T) {
 	if err := os.Setenv("INFLUX_HOSTNAME", "testHost"); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.Setenv("INFLUX_USERNAME", "testUser"); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Setenv("INFLUX_PASSWORD", "testPassword"); err != nil {
+	if err := os.Setenv("INFLUX_TOKEN", "testToken"); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.Setenv("INFLUX_BUCKET", "testBucket"); err != nil {
@@ -60,8 +57,7 @@ func TestBuildGeneric(t *testing.T) {
 	i := NewSystem()
 	in, err := i.Build()
 	assert.NoError(t, err)
-	assert.Equal(t, "testPassword", in.Password)
-	assert.Equal(t, "testUser", in.User)
+	assert.Equal(t, "testToken", in.Token)
 	assert.Equal(t, "testBucket", in.Bucket)
 	assert.Equal(t, "testOrg", in.Org)
 	assert.Equal(t, "testHost", in.Host)
@@ -70,8 +66,7 @@ func TestBuildGeneric(t *testing.T) {
 func TestBuildVault(t *testing.T) {
 	mockVault := &MockVaultHelper{
 		KVSecrets: []vaultHelper.KVSecret{
-			{Key: "influx-password", Value: "testPassword"},
-			{Key: "influx-username", Value: "testUser"},
+			{Key: "influx-token", Value: "testToken"},
 			{Key: "influx-bucket", Value: "testBucket"},
 			{Key: "influx-hostname", Value: "testHost"},
 			{Key: "influx-org", Value: "testOrg"},
@@ -86,8 +81,7 @@ func TestBuildVault(t *testing.T) {
 	in, err := i.Build()
 	assert.NoError(t, err)
 
-	assert.Equal(t, "testPassword", in.Password)
-	assert.Equal(t, "testUser", in.User)
+	assert.Equal(t, "testToken", in.Token)
 	assert.Equal(t, "testBucket", in.Bucket)
 	assert.Equal(t, "testOrg", in.Org)
 	assert.Equal(t, "testHost", in.Host)
@@ -96,8 +90,7 @@ func TestBuildVault(t *testing.T) {
 func TestBuildVaultNoHost(t *testing.T) {
 	mockVault := &MockVaultHelper{
 		KVSecrets: []vaultHelper.KVSecret{
-			{Key: "influx-password", Value: "testPassword"},
-			{Key: "influx-username", Value: "testUser"},
+			{Key: "influx-token", Value: "testToken"},
 			{Key: "influx-bucket", Value: "testBucket"},
 			{Key: "influx-org", Value: "testOrg"},
 		},
@@ -111,8 +104,7 @@ func TestBuildVaultNoHost(t *testing.T) {
 	in, err := i.Build()
 	assert.NoError(t, err)
 
-	assert.Equal(t, "testPassword", in.Password)
-	assert.Equal(t, "testUser", in.User)
+	assert.Equal(t, "testToken", in.Token)
 	assert.Equal(t, "testBucket", in.Bucket)
 	assert.Equal(t, "testOrg", in.Org)
 	assert.Equal(t, "http://db.chewed-k8s.net:8086", in.Host)
