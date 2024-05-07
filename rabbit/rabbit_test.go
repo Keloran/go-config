@@ -1,6 +1,9 @@
 package rabbit
 
 import (
+	"bytes"
+	"io"
+	"net/http"
 	"os"
 	"testing"
 
@@ -9,22 +12,23 @@ import (
 )
 
 type MockHTTPClient struct{}
+
 func (m *MockHTTPClient) Do(req *http.Request) (*http.Response, error) {
-  if req.URL.Path == "testHost/api/queues/testVHost/testQueue/get" {
-    response := `[
+	if req.URL.Path == "testHost/api/queues/testVHost/testQueue/get" {
+		response := `[
       {"payload":"test message","payload_bytes":12,"redelivered":false}
     ]`
-    return &http.Response{
-      StatusCode: 200,
-      Body:       io.NopCloser(bytes.NewBufferString(response)),
-      Header:     make(http.Header),
-    }, nil
-  }
-  return &http.Response{
-    StatusCode: 404,
-    Body:       io.NopCloser(bytes.NewBufferString("")),
-    Header:     make(http.Header),
-  }, nil
+		return &http.Response{
+			StatusCode: 200,
+			Body:       io.NopCloser(bytes.NewBufferString(response)),
+			Header:     make(http.Header),
+		}, nil
+	}
+	return &http.Response{
+		StatusCode: 404,
+		Body:       io.NopCloser(bytes.NewBufferString("")),
+		Header:     make(http.Header),
+	}, nil
 }
 
 func TestVaultBuild(t *testing.T) {
