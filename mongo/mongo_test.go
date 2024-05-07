@@ -1,45 +1,11 @@
 package mongo
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
-	"github.com/bugfixes/go-bugfixes/logs"
-
-	vaultHelper "github.com/keloran/vault-helper"
 	"github.com/stretchr/testify/assert"
 )
-
-type MockVaultHelper struct {
-	KVSecrets []vaultHelper.KVSecret
-	Lease     int
-}
-
-func (m *MockVaultHelper) GetSecrets(path string) error {
-	if path == "" {
-		return logs.Error("path not found")
-	}
-
-	return nil // or simulate an error if needed
-}
-
-func (m *MockVaultHelper) GetSecret(key string) (string, error) {
-	for _, s := range m.Secrets() {
-		if s.Key == key {
-			return s.Value, nil
-		}
-	}
-  return "", fmt.Errorf("key: '%s' not found", key)
-}
-
-func (m *MockVaultHelper) Secrets() []vaultHelper.KVSecret {
-	return m.KVSecrets
-}
-
-func (m *MockVaultHelper) LeaseDuration() int {
-	return m.Lease
-}
 
 func TestBuildCollections(t *testing.T) {
 	os.Clearenv() // Clear all environment variables

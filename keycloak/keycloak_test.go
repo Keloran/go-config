@@ -1,47 +1,16 @@
 package keycloak
 
 import (
-	"fmt"
-	vaulthelper "github.com/keloran/vault-helper"
+	vaultHelper "github.com/keloran/vault-helper"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-type MockVaultHelper struct {
-	KVSecrets []vaulthelper.KVSecret
-	Lease     int
-}
-
-func (m *MockVaultHelper) GetSecrets(path string) error {
-	if path == "" {
-		return fmt.Errorf("path not found: %s", path)
-	}
-
-	return nil
-}
-
-func (m *MockVaultHelper) GetSecret(key string) (string, error) {
-	for _, s := range m.Secrets() {
-		for s.Key == key {
-			return s.Value, nil
-		}
-	}
-
-	return "", fmt.Errorf("key: '%s' not found", key)
-}
-
-func (m *MockVaultHelper) Secrets() []vaulthelper.KVSecret {
-	return m.KVSecrets
-}
-func (m *MockVaultHelper) LeaseDuration() int {
-	return m.Lease
-}
-
 func TestBuildVault(t *testing.T) {
-	mockVault := &MockVaultHelper{
-		KVSecrets: []vaulthelper.KVSecret{
+	mockVault := &vaultHelper.MockVaultHelper{
+		KVSecrets: []vaultHelper.KVSecret{
 			{Key: "keycloak-client", Value: "testClient"},
 			{Key: "keycloak-secret", Value: "testSecret"},
 			{Key: "keycloak-realm", Value: "testRealm"},

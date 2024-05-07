@@ -1,42 +1,11 @@
 package influx
 
 import (
-	"fmt"
 	vaultHelper "github.com/keloran/vault-helper"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
 )
-
-type MockVaultHelper struct {
-	KVSecrets []vaultHelper.KVSecret
-	Lease     int
-}
-
-func (m *MockVaultHelper) GetSecrets(path string) error {
-	if path == "" {
-		return fmt.Errorf("path not found: %s", path)
-	}
-
-	return nil // or simulate an error if needed
-}
-
-func (m *MockVaultHelper) GetSecret(key string) (string, error) {
-	for _, s := range m.Secrets() {
-		if s.Key == key {
-			return s.Value, nil
-		}
-	}
-  return "", fmt.Errorf("key: '%s' not found", key)
-}
-
-func (m *MockVaultHelper) Secrets() []vaultHelper.KVSecret {
-	return m.KVSecrets
-}
-
-func (m *MockVaultHelper) LeaseDuration() int {
-	return m.Lease
-}
 
 func TestBuildGeneric(t *testing.T) {
 	os.Clearenv()
@@ -64,7 +33,7 @@ func TestBuildGeneric(t *testing.T) {
 }
 
 func TestBuildVault(t *testing.T) {
-	mockVault := &MockVaultHelper{
+	mockVault := &vaultHelper.MockVaultHelper{
 		KVSecrets: []vaultHelper.KVSecret{
 			{Key: "influx-token", Value: "testToken"},
 			{Key: "influx-bucket", Value: "testBucket"},
@@ -88,7 +57,7 @@ func TestBuildVault(t *testing.T) {
 }
 
 func TestBuildVaultNoHost(t *testing.T) {
-	mockVault := &MockVaultHelper{
+	mockVault := &vaultHelper.MockVaultHelper{
 		KVSecrets: []vaultHelper.KVSecret{
 			{Key: "influx-token", Value: "testToken"},
 			{Key: "influx-bucket", Value: "testBucket"},
