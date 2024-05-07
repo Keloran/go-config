@@ -66,6 +66,15 @@ func Database(cfg *Config) error {
 	d := database.NewSystem()
 	if cfg.VaultHelper != nil {
 		vd := database.VaultDetails{}
+		if cfg.VaultPaths != (vault.Paths{}) {
+			if cfg.VaultPaths.Database.Details != "" {
+				vd.DetailsPath = cfg.VaultPaths.Database.Details
+			}
+			if cfg.VaultPaths.Database.Credentials != "" {
+				vd.CredPath = cfg.VaultPaths.Database.Credentials
+			}
+		}
+
 		d.Setup(vd, *cfg.VaultHelper)
 	}
 	db, err := d.Build()
@@ -82,6 +91,15 @@ func Mongo(cfg *Config) error {
 	m := mongo.NewSystem()
 	if cfg.VaultHelper != nil {
 		vd := mongo.VaultDetails{}
+		if cfg.VaultPaths != (vault.Paths{}) {
+			if cfg.VaultPaths.Mongo.Details != "" {
+				vd.DetailsPath = cfg.VaultPaths.Mongo.Details
+			}
+			if cfg.VaultPaths.Mongo.Credentials != "" {
+				vd.CredPath = cfg.VaultPaths.Mongo.Credentials
+			}
+		}
+
 		m.Setup(vd, *cfg.VaultHelper)
 	}
 	_, err := m.Build()
@@ -97,6 +115,12 @@ func Keycloak(cfg *Config) error {
 	k := keycloak.NewSystem()
 	if cfg.VaultHelper != nil {
 		vd := keycloak.VaultDetails{}
+		if cfg.VaultPaths != (vault.Paths{}) {
+			if cfg.VaultPaths.Keycloak.Details != "" {
+				vd.DetailsPath = cfg.VaultPaths.Keycloak.Details
+			}
+		}
+
 		k.Setup(vd, *cfg.VaultHelper)
 	}
 
@@ -112,6 +136,15 @@ func Rabbit(cfg *Config) error {
 	r := rabbit.NewSystem(&http.Client{})
 	if cfg.VaultHelper != nil {
 		vd := rabbit.VaultDetails{}
+		if cfg.VaultPaths != (vault.Paths{}) {
+			if cfg.VaultPaths.Rabbit.Details != "" {
+				vd.DetailsPath = cfg.VaultPaths.Rabbit.Details
+			}
+			if cfg.VaultPaths.Rabbit.Credentials != "" {
+				vd.CredPath = cfg.VaultPaths.Rabbit.Credentials
+			}
+		}
+
 		r.Setup(vd, *cfg.VaultHelper)
 	}
 	_, err := r.Build()
@@ -128,6 +161,12 @@ func Influx(cfg *Config) error {
 	i := influx.NewSystem()
 	if cfg.VaultHelper != nil {
 		vd := influx.VaultDetails{}
+		if cfg.VaultPaths != (vault.Paths{}) {
+			if cfg.VaultPaths.Influx.Details != "" {
+				vd.DetailsPath = cfg.VaultPaths.Influx.Details
+			}
+		}
+
 		i.Setup(vd, *cfg.VaultHelper)
 	}
 

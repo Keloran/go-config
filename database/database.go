@@ -12,8 +12,8 @@ import (
 )
 
 type VaultDetails struct {
-	CredPath   string `env:"RDS_VAULT_CRED_PATH" envDefault:"secret/data/chewedfeed/postgres"`
-	DetailPath string `env:"RDS_VAULT_DETAIL_PATH" envDefault:"secret/data/chewedfeed/details"`
+	CredPath    string `env:"RDS_VAULT_CRED_PATH" envDefault:"secret/data/chewedfeed/postgres"`
+	DetailsPath string `env:"RDS_VAULT_DETAIL_PATH" envDefault:"secret/data/chewedfeed/details"`
 
 	ExpireTime time.Time
 }
@@ -60,7 +60,7 @@ func (s *System) buildGeneric() (*Details, error) {
 		return rds, logs.Errorf("failed to parse database env: %v", err)
 	}
 
-  s.Details = *rds
+	s.Details = *rds
 
 	return rds, nil
 }
@@ -90,7 +90,7 @@ func (s *System) buildVault() (*Details, error) {
 	rds.Password = password
 
 	// Get Details
-	if err := vh.GetSecrets(s.VaultDetails.DetailPath); err != nil {
+	if err := vh.GetSecrets(s.VaultDetails.DetailsPath); err != nil {
 		return rds, logs.Errorf("failed to get detail secrets from vault: %v", err)
 	}
 	if vh.Secrets() == nil {
@@ -127,7 +127,7 @@ func (s *System) buildVault() (*Details, error) {
 	}
 	rds.Host = host
 
-  s.Details = *rds
+	s.Details = *rds
 
 	return rds, nil
 }
