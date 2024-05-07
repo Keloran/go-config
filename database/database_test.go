@@ -51,8 +51,6 @@ func TestBuildVault(t *testing.T) {
 	}
 
   vd := &VaultDetails{
-    Address: "mockAddress",
-    Token: "mockToken",
     CredPath: "tester",
     DetailPath: "tester",
   }
@@ -79,8 +77,6 @@ func TestBuildVaultNoPort(t *testing.T) {
   }
 
     vd := &VaultDetails{
-      Address: "mockAddress",
-      Token: "mockToken",
       CredPath: "tester",
       DetailPath: "tester",
     }

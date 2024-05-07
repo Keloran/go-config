@@ -12,9 +12,6 @@ import (
 )
 
 type VaultDetails struct {
-	Address string
-	Token   string
-
 	CredPath   string `env:"RDS_VAULT_CRED_PATH" envDefault:"secret/data/chewedfeed/postgres"`
 	DetailPath string `env:"RDS_VAULT_DETAIL_PATH" envDefault:"secret/data/chewedfeed/details"`
 
@@ -62,6 +59,8 @@ func (s *System) buildGeneric() (*Details, error) {
 	if err := env.Parse(rds); err != nil {
 		return rds, logs.Errorf("failed to parse database env: %v", err)
 	}
+
+  s.Details = *rds
 
 	return rds, nil
 }
@@ -127,6 +126,8 @@ func (s *System) buildVault() (*Details, error) {
 		host = "db.chewed-k8s.net"
 	}
 	rds.Host = host
+
+  s.Details = *rds
 
 	return rds, nil
 }

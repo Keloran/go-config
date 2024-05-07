@@ -61,10 +61,7 @@ func Vault(cfg *Config) error {
 func Database(cfg *Config) error {
 	d := database.NewSystem()
 	if cfg.VaultHelper != nil {
-		vd := database.VaultDetails{
-			Address: cfg.Vault.Address,
-			Token:   cfg.Vault.Token,
-		}
+		vd := database.VaultDetails{}
 		d.Setup(vd, *cfg.VaultHelper)
 	}
 	db, err := d.Build()
@@ -80,10 +77,7 @@ func Database(cfg *Config) error {
 func Mongo(cfg *Config) error {
 	m := mongo.NewSystem()
 	if cfg.VaultHelper != nil {
-		vd := mongo.VaultDetails{
-			Address: cfg.Vault.Address,
-			Token:   cfg.Vault.Token,
-		}
+    vd := mongo.VaultDetails{}
 		m.Setup(vd, *cfg.VaultHelper)
 	}
 	_, err := m.Build()
@@ -98,10 +92,7 @@ func Mongo(cfg *Config) error {
 func Keycloak(cfg *Config) error {
 	k := keycloak.NewSystem()
 	if cfg.VaultHelper != nil {
-		vd := keycloak.VaultDetails{
-			Address: cfg.Vault.Address,
-			Token:   cfg.Vault.Token,
-		}
+		vd := keycloak.VaultDetails{}
 		k.Setup(vd, *cfg.VaultHelper)
 	}
 
@@ -116,10 +107,7 @@ func Keycloak(cfg *Config) error {
 func Rabbit(cfg *Config) error {
 	r := rabbit.NewSystem(&http.Client{})
 	if cfg.VaultHelper != nil {
-		vd := rabbit.VaultDetails{
-			Address: cfg.Vault.Address,
-			Token:   cfg.Vault.Token,
-		}
+		vd := rabbit.VaultDetails{}
 		r.Setup(vd, *cfg.VaultHelper)
 	}
 	_, err := r.Build()
