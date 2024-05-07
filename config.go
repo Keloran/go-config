@@ -15,7 +15,8 @@ import (
 
 type Config struct {
 	VaultHelper *vaultHelper.VaultHelper
-	VaultPaths  vault.VaultPaths
+	VaultPaths  vault.Paths
+	VaultInject bool
 
 	Local    local.System
 	Vault    vault.System
@@ -30,9 +31,9 @@ type Config struct {
 
 type BuildOption func(*Config) error
 
-func NewConfig(vh *vaultHelper.VaultHelper) *Config {
+func NewConfig(vh vaultHelper.VaultHelper) *Config {
 	return &Config{
-		VaultHelper: vh,
+		VaultHelper: &vh,
 	}
 }
 
@@ -48,12 +49,13 @@ func Local(cfg *Config) error {
 }
 
 func Vault(cfg *Config) error {
-	v, err := vault.Build()
+	v, vh, err := vault.Build()
 	if err != nil {
 		return logs.Errorf("build vault: %v", err)
 	}
 
 	cfg.Vault = *v
+	cfg.VaultHelper = &vh
 
 	return nil
 }
@@ -77,7 +79,7 @@ func Database(cfg *Config) error {
 func Mongo(cfg *Config) error {
 	m := mongo.NewSystem()
 	if cfg.VaultHelper != nil {
-    vd := mongo.VaultDetails{}
+		vd := mongo.VaultDetails{}
 		m.Setup(vd, *cfg.VaultHelper)
 	}
 	_, err := m.Build()
@@ -122,6 +124,7 @@ func Rabbit(cfg *Config) error {
 
 func Build(opts ...BuildOption) (*Config, error) {
 	cfg := &Config{}
+
 	if err := cfg.Build(opts...); err != nil {
 		return nil, logs.Errorf("build config: %v", err)
 	}

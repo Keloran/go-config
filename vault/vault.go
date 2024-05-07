@@ -2,6 +2,7 @@ package vault
 
 import (
 	"fmt"
+	vaultHelper "github.com/keloran/vault-helper"
 	"strings"
 	"time"
 
@@ -10,40 +11,40 @@ import (
 	"github.com/caarlos0/env/v8"
 )
 
-type VaultPath struct {
-  Details     string
-  Credentials string
+type Path struct {
+	Details     string
+	Credentials string
 }
 
-type VaultPaths struct {
-  Database VaultPath
-  Keycloak VaultPath
-  Mongo    VaultPath
-  Rabbit   VaultPath
-  Influx   VaultPath
+type Paths struct {
+	Database Path
+	Keycloak Path
+	Mongo    Path
+	Rabbit   Path
+	Influx   Path
 }
 
 // System is the vault config
 type System struct {
-	Host       string `env:"VAULT_HOST" envDefault:"localhost"`
+	Host       string `env:"VAULT_HOST" envDefault:"vault.vault"`
 	Port       string `env:"VAULT_PORT" envDefault:""`
 	Token      string `env:"VAULT_TOKEN" envDefault:"root"`
 	Address    string
 	ExpireTime time.Time
 }
 
-func NewVault(address, token string) *System {
+func NewSystem(address, token string) *System {
 	return &System{
 		Address: address,
 		Token:   token,
 	}
 }
 
-func Build() (*System, error) {
-	v := NewVault("", "")
+func Build() (*System, vaultHelper.VaultHelper, error) {
+	v := NewSystem("", "")
 
 	if err := env.Parse(v); err != nil {
-		return v, logs.Errorf("vault: %v", err)
+		return v, nil, logs.Errorf("vault: %v", err)
 	}
 
 	if strings.HasPrefix(v.Host, "http") {
@@ -58,5 +59,7 @@ func Build() (*System, error) {
 		v.Address = fmt.Sprintf("https://%s", v.Host)
 	}
 
-	return v, nil
+	vh := vaultHelper.NewVault(v.Address, v.Token)
+
+	return v, vh, nil
 }
