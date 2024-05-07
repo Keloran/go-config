@@ -190,6 +190,32 @@ func TestMongo(t *testing.T) {
 	})
 }
 
+func TestInflux(t *testing.T) {
+	mockVault := &MockVaultHelper{
+		KVSecrets: []vaulthelper.KVSecret{
+			{Key: "influx-password", Value: "testPassword"},
+			{Key: "influx-username", Value: "testUser"},
+			{Key: "influx-hostname", Value: "testHost"},
+			{Key: "influx-db", Value: "testDB"},
+			{Key: "influx-org", Value: "testOrg"},
+			{Key: "influx-bucket", Value: "testBucket"},
+		},
+	}
+
+	t.Run("influx no set values", func(t *testing.T) {
+		os.Clearenv()
+		cfg, err := BuildLocal(Influx)
+		assert.NoError(t, err)
+		assert.Equal(t, "http://db.chewed-k8s.net:8086", cfg.Influx.Host)
+	})
+	t.Run("influx with values", func(t *testing.T) {
+		os.Clearenv()
+		cfg, err := BuildLocalVH(mockVault, Influx)
+		assert.NoError(t, err)
+		assert.Equal(t, "testUser", cfg.Influx.User)
+	})
+}
+
 // Assuming ProjectConfigurator interface and Config structure are defined as shown previously
 
 // MockProjectConfigurator is a mock implementation for testing purposes.
