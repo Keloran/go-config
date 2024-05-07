@@ -40,6 +40,29 @@ func (m *MockVaultHelper) LeaseDuration() int {
 	return m.Lease
 }
 
+func TestConfig(t *testing.T) {
+  t.Run("test config mock vault", func(t *testing.T) {
+    mockVault := &MockVaultHelper{
+      KVSecrets: []vaulthelper.KVSecret{
+        {Key: "password", Value: "testPassword"},
+        {Key: "username", Value: "testUser"},
+        {Key: "rds-hostname", Value: "testHost"},
+        {Key: "rds-db", Value: "testDB"},
+      },
+    }
+
+    cfg := NewConfig(mockVault)
+    err := cfg.Build(Local)
+    assert.NoError(t, err)
+  })
+  t.Run("test config real vault", func(t *testing.T) {
+    vh := vaulthelper.NewVault("tester", "tester")
+    cfg := NewConfig(vh)
+    err := cfg.Build(Local)
+    assert.NoError(t, err)
+  })
+}
+
 func TestBuild(t *testing.T) {
 	t.Run("default values", func(t *testing.T) {
 		os.Clearenv() // Clear all environment variables

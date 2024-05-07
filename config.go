@@ -30,9 +30,9 @@ type Config struct {
 
 type BuildOption func(*Config) error
 
-func NewConfig(vh *vaultHelper.VaultHelper) *Config {
+func NewConfig(vh vaultHelper.VaultHelper) *Config {
 	return &Config{
-		VaultHelper: vh,
+		VaultHelper: &vh,
 	}
 }
 
