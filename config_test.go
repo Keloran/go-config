@@ -193,8 +193,7 @@ func TestMongo(t *testing.T) {
 func TestInflux(t *testing.T) {
 	mockVault := &MockVaultHelper{
 		KVSecrets: []vaulthelper.KVSecret{
-			{Key: "influx-password", Value: "testPassword"},
-			{Key: "influx-username", Value: "testUser"},
+			{Key: "influx-token", Value: "testToken"},
 			{Key: "influx-hostname", Value: "testHost"},
 			{Key: "influx-db", Value: "testDB"},
 			{Key: "influx-org", Value: "testOrg"},
@@ -212,7 +211,7 @@ func TestInflux(t *testing.T) {
 		os.Clearenv()
 		cfg, err := BuildLocalVH(mockVault, Influx)
 		assert.NoError(t, err)
-		assert.Equal(t, "testUser", cfg.Influx.User)
+		assert.Equal(t, "testToken", cfg.Influx.Token)
 	})
 }
 

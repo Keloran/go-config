@@ -15,8 +15,7 @@ type VaultDetails struct {
 
 type Details struct {
 	Host     string `env:"INFLUX_HOSTNAME" envDefault:"http://db.chewed-k8s.net:8086"`
-	User     string `env:"INFLUX_USERNAME"`
-	Password string `env:"INFLUX_PASSWORD"`
+	Token    string `env:"INFLUX_TOKEN"`
 	Bucket   string `env:"INFLUX_BUCKET"`
 	Org      string `env:"INFLUX_ORG"`
 }
@@ -71,17 +70,11 @@ func (s *System) buildVault() (*Details, error) {
 		return in, logs.Error("no influx cred serets found")
 	}
 
-	username, err := vh.GetSecret("influx-username")
+	token, err := vh.GetSecret("influx-token")
 	if err != nil {
-		return in, logs.Errorf("failed to get username: %v", err)
+		return in, logs.Errorf("failed to get token: %v", err)
 	}
-	in.User = username
-
-	password, err := vh.GetSecret("influx-password")
-	if err != nil {
-		return in, logs.Errorf("failed to get password: %v", err)
-	}
-	in.Password = password
+	in.Token = token
 
 	bucket, err := vh.GetSecret("influx-bucket")
 	if err != nil {
