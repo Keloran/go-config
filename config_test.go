@@ -41,26 +41,26 @@ func (m *MockVaultHelper) LeaseDuration() int {
 }
 
 func TestConfig(t *testing.T) {
-  t.Run("test config mock vault", func(t *testing.T) {
-    mockVault := &MockVaultHelper{
-      KVSecrets: []vaulthelper.KVSecret{
-        {Key: "password", Value: "testPassword"},
-        {Key: "username", Value: "testUser"},
-        {Key: "rds-hostname", Value: "testHost"},
-        {Key: "rds-db", Value: "testDB"},
-      },
-    }
+	t.Run("test config mock vault", func(t *testing.T) {
+		mockVault := &MockVaultHelper{
+			KVSecrets: []vaulthelper.KVSecret{
+				{Key: "password", Value: "testPassword"},
+				{Key: "username", Value: "testUser"},
+				{Key: "rds-hostname", Value: "testHost"},
+				{Key: "rds-db", Value: "testDB"},
+			},
+		}
 
-    cfg := NewConfig(mockVault)
-    err := cfg.Build(Local)
-    assert.NoError(t, err)
-  })
-  t.Run("test config real vault", func(t *testing.T) {
-    vh := vaulthelper.NewVault("tester", "tester")
-    cfg := NewConfig(vh)
-    err := cfg.Build(Local)
-    assert.NoError(t, err)
-  })
+		cfg := NewConfig(mockVault)
+		err := cfg.Build(Local)
+		assert.NoError(t, err)
+	})
+	t.Run("test config real vault", func(t *testing.T) {
+		vh := vaulthelper.NewVault("tester", "tester")
+		cfg := NewConfig(vh)
+		err := cfg.Build(Local)
+		assert.NoError(t, err)
+	})
 }
 
 func TestBuild(t *testing.T) {
@@ -161,7 +161,7 @@ func TestVault(t *testing.T) {
 		os.Clearenv()
 		cfg, err := Build(Vault)
 		assert.NoError(t, err)
-		assert.Equal(t, "localhost", cfg.Vault.Host)
+		assert.Equal(t, "vault.vault", cfg.Vault.Host)
 	})
 }
 
