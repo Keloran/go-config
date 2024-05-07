@@ -5,6 +5,7 @@ import (
 
 	"github.com/bugfixes/go-bugfixes/logs"
 	"github.com/keloran/go-config/database"
+	"github.com/keloran/go-config/influx"
 	"github.com/keloran/go-config/keycloak"
 	"github.com/keloran/go-config/local"
 	"github.com/keloran/go-config/mongo"
@@ -24,6 +25,7 @@ type Config struct {
 	Keycloak keycloak.System
 	Mongo    mongo.System
 	Rabbit   rabbit.System
+	Influx   influx.System
 
 	// Project level properties
 	ProjectProperties map[string]interface{}
@@ -118,6 +120,23 @@ func Rabbit(cfg *Config) error {
 	}
 
 	cfg.Rabbit = *r
+
+	return nil
+}
+
+func Influx(cfg *Config) error {
+	i := influx.NewSystem()
+	if cfg.VaultHelper != nil {
+		vd := influx.VaultDetails{}
+		i.Setup(vd, *cfg.VaultHelper)
+	}
+
+	_, err := i.Build()
+	if err != nil {
+		return logs.Errorf("failed to build influx: %v", err)
+	}
+
+	cfg.Influx = *i
 
 	return nil
 }

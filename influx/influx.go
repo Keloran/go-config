@@ -1,4 +1,4 @@
-package infliux
+package influx
 
 import (
 	"context"
