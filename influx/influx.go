@@ -97,7 +97,7 @@ func (s *System) buildVault() (*Details, error) {
 
 	host, err := vh.GetSecret("influx-hostname")
 	if err != nil {
-		if err.Error() != fmt.Sprint("key not found") && err.Error() != fmt.Sprint("key not found: influx-hostname") {
+		if err.Error() != fmt.Sprint("key: 'influx-hostname' not found") {
 			return in, logs.Errorf("failed to get host: %v", err)
 		}
 		host = "http://db.chewed-k8s.net:8086"

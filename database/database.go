@@ -99,7 +99,7 @@ func (s *System) buildVault() (*Details, error) {
 
 	port, err := vh.GetSecret("rds-port")
 	if err != nil {
-		if err.Error() != fmt.Sprint("key not found") && err.Error() != fmt.Sprint("key not found: rds-port") {
+		if err.Error() != fmt.Sprint("key: 'rds-port' not found") {
 			return rds, logs.Errorf("failed to get port: %v", err)
 		}
 		port = "5432"
@@ -120,7 +120,7 @@ func (s *System) buildVault() (*Details, error) {
 
 	host, err := vh.GetSecret("rds-hostname")
 	if err != nil {
-		if err.Error() != fmt.Sprint("key not found: rds-hostname") {
+		if err.Error() != fmt.Sprint("key: 'rds-hostname' not found") {
 			return rds, logs.Errorf("failed to get host: %v", err)
 		}
 		host = "db.chewed-k8s.net"

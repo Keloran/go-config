@@ -30,7 +30,7 @@ func (m *MockVaultHelper) GetSecret(key string) (string, error) {
 			return s.Value, nil
 		}
 	}
-	return "", fmt.Errorf("key not found")
+  return "", fmt.Errorf("key: '%s' not found", key)
 }
 
 func (m *MockVaultHelper) Secrets() []vaultHelper.KVSecret {
