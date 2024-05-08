@@ -21,7 +21,7 @@ type Config struct {
 
 	Local    local.System
 	Vault    vault.System
-	Database database.Details
+	Database database.System
 	Keycloak keycloak.System
 	Mongo    mongo.System
 	Rabbit   rabbit.System
@@ -77,12 +77,12 @@ func Database(cfg *Config) error {
 
 		d.Setup(vd, *cfg.VaultHelper)
 	}
-	db, err := d.Build()
+	_, err := d.Build()
 	if err != nil {
 		return logs.Errorf("database failed to build: %v", err)
 	}
 
-	cfg.Database = *db
+	cfg.Database = *d
 
 	return nil
 }
