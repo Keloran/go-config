@@ -3,7 +3,8 @@ package database
 import (
 	"context"
 	"fmt"
-	"strconv"
+  "github.com/jackc/pgx/v5"
+  "strconv"
 	"time"
 
 	"github.com/bugfixes/go-bugfixes/logs"
@@ -130,4 +131,25 @@ func (s *System) buildVault() (*Details, error) {
 	s.Details = *rds
 
 	return rds, nil
+}
+
+func (s *System) GetPGXClient(ctx context.Context) (*pgx.Conn, error) {
+  if time.Now().Unix() > s.VaultDetails.ExpireTime.Unix() {
+    s.buildVault()
+  }
+
+  client, err := pgx.Connect(ctx, fmt.Sprintf("postgres://%s:%s@%s:%d/%s", s.User, s.Password, s.Host, s.Port, s.DBName))
+  if err != nil {
+    return nil, logs.Errorf("failed to get db client: %v", err)
+  }
+
+  return client, nil
+}
+
+func (s *System) ClosePGX(ctx context.Context, conn pgx.Conn) error {
+  if err := conn.Close(ctx); err != nil {
+    return logs.Errorf("failed to close db client: %v", err)
+  }
+
+  return nil
 }
