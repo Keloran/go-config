@@ -19,7 +19,7 @@ type System struct {
 	Context context.Context
 
 	Details
-	Logger logs.BugFixes
+	Logger *logs.BugFixes
 
 	VaultDetails vaultHelper.VaultDetails
 	VaultHelper  *vaultHelper.VaultHelper

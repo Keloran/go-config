@@ -200,7 +200,7 @@ func Bugfixes(cfg *Config) error {
     return logs.Errorf("failed to build bugfixes: %v", err)
   }
 
-  bf := logs.BugFixes{}
+  bf := &logs.BugFixes{}
   bf.Setup(b.AgentKey, b.AgentSecret)
   b.Logger = bf
 

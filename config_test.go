@@ -215,6 +215,19 @@ func TestInflux(t *testing.T) {
 	})
 }
 
+func TestBugfixes(t *testing.T) {
+  mockVault := &MockVaultHelper{
+    KVSecrets: []vaulthelper.KVSecret{
+      {Key: "bugfixes-agentid", Value: "testKey"},
+      {Key: "bugfixes-secret", Value: "testSecret"},
+    },
+  }
+
+  cfg, err := BuildLocalVH(mockVault, Bugfixes)
+  assert.NoError(t, err)
+  assert.Equal(t, "testSecret", cfg.Bugfixes.Logger.Secret)
+}
+
 // Assuming ProjectConfigurator interface and Config structure are defined as shown previously
 
 // MockProjectConfigurator is a mock implementation for testing purposes.
