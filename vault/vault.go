@@ -22,6 +22,7 @@ type Paths struct {
 	Mongo    Path
 	Rabbit   Path
 	Influx   Path
+  BugFixes Path
 }
 
 // System is the vault config
