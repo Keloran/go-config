@@ -128,6 +128,7 @@ func (s *System) buildVault() (*Details, error) {
 	}
 	rds.Host = host
 
+  s.ExpireTime = time.Now().Add(time.Duration(vh.LeaseDuration()) * time.Second)
 	s.Details = *rds
 
 	return rds, nil
