@@ -8,10 +8,10 @@ require (
 	github.com/Nerzal/gocloak/v13 v13.9.0
 	github.com/bugfixes/go-bugfixes v0.12.18
 	github.com/caarlos0/env/v8 v8.0.0
-	github.com/jackc/pgx/v5 v5.5.5
-	github.com/keloran/vault-helper v0.10.1
+	github.com/jackc/pgx/v5 v5.6.0
+	github.com/keloran/vault-helper v0.9.1
 	github.com/stretchr/testify v1.9.0
-	go.mongodb.org/mongo-driver v1.15.0
+	go.mongodb.org/mongo-driver v1.16.0
 	go.uber.org/mock v0.4.0
 )
 
