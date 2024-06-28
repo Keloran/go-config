@@ -13,6 +13,7 @@ import (
 
 type Path struct {
 	Details     string
+  Local string
 	Credentials string
 }
 

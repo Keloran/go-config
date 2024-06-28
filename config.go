@@ -167,6 +167,9 @@ func Influx(cfg *Config) error {
 			if cfg.VaultPaths.Influx.Details != "" {
 				vd.DetailsPath = cfg.VaultPaths.Influx.Details
 			}
+      if cfg.VaultPaths.Influx.Local != "" {
+        vd.LocalPath = cfg.VaultPaths.Influx.Local
+      }
 		}
 
 		i.Setup(vd, *cfg.VaultHelper)
