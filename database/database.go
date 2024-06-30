@@ -15,6 +15,7 @@ import (
 type VaultDetails struct {
 	CredPath    string `env:"RDS_VAULT_CRED_PATH" envDefault:"secret/data/chewedfeed/postgres"`
 	DetailsPath string `env:"RDS_VAULT_DETAIL_PATH" envDefault:"secret/data/chewedfeed/details"`
+  LocalPath string `env:"RDS_VAULT_LOCAL_PATH" envDefault:"/secrets/secrets"`
 
 	ExpireTime time.Time
 }
@@ -71,7 +72,7 @@ func (s *System) buildVault() (*Details, error) {
 	vh := *s.VaultHelper
 
 	// Get Credentials
-	if err := vh.GetSecrets(s.VaultDetails.CredPath); err != nil {
+	if err := vh.GetRemoteSecrets(s.VaultDetails.CredPath); err != nil {
 		return rds, logs.Errorf("failed to get cred secrets from vault: %v", err)
 	}
 	if vh.Secrets() == nil {
@@ -91,9 +92,15 @@ func (s *System) buildVault() (*Details, error) {
 	rds.Password = password
 
 	// Get Details
-	if err := vh.GetSecrets(s.VaultDetails.DetailsPath); err != nil {
-		return rds, logs.Errorf("failed to get detail secrets from vault: %v", err)
-	}
+  if s.VaultDetails.LocalPath != "" && s.VaultDetails.DetailsPath == "" {
+    if err := vh.GetLocalSecrets(s.VaultDetails.LocalPath); err != nil {
+      return rds, logs.Errorf("failed to get local secrets from vault: %v", err)
+    }
+  } else {
+    if err := vh.GetRemoteSecrets(s.VaultDetails.DetailsPath); err != nil {
+      return rds, logs.Errorf("failed to get detail secrets from vault: %v", err)
+    }
+  }
 	if vh.Secrets() == nil {
 		return rds, logs.Error("no rds detail secrets found")
 	}

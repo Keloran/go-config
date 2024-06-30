@@ -28,6 +28,7 @@ type VaultDetails struct {
 
 	CredPath    string `env:"RABBIT_VAULT_CREDS_PATH" envDefault:"secrets/data/chewedfeed/rabbitmq"`
 	DetailsPath string `env:"RABBIT_VAULT_DETAILS_PATH" envDefault:"secrets/data/chewedfeed/details"`
+  LocalPath string `env:"RABBIT_VAULT_LOCAL_PATH" envDefault:"/secrets/rabbit.json"`
 
 	ExpireTime time.Time
 }
@@ -87,9 +88,15 @@ func (s *System) buildVault() (*Details, error) {
 	rab := &Details{}
 	vh := *s.VaultHelper
 
-	if err := vh.GetSecrets(s.VaultDetails.DetailsPath); err != nil {
-		return rab, logs.Errorf("failed to get rabbit secrets from vault: %v", err)
-	}
+  if s.VaultDetails.LocalPath != "" && s.VaultDetails.DetailsPath == "" {
+    if err := vh.GetLocalSecrets(s.VaultDetails.LocalPath); err != nil {
+      return rab, logs.Errorf("failed to get local rabbit secrets from vault: %v", err)
+    }
+  } else if s.VaultDetails.DetailsPath != "" {
+    if err := vh.GetRemoteSecrets(s.VaultDetails.DetailsPath); err != nil {
+		  return rab, logs.Errorf("failed to get rabbit secrets from vault: %v", err)
+	  }
+  }
 	if vh.Secrets() == nil {
 		return rab, logs.Error("no rabbit secrets found")
 	}

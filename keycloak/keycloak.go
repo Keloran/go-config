@@ -15,6 +15,7 @@ type VaultDetails struct {
 	Token   string
 
 	DetailsPath string `env:"KEYCLOAK_VAULT_DETAIL_PATH" envDefault:"secret/data/chewedfeed/details"`
+  LocalPath string `env:"KEYCLOAK_VAULT_LOCAL_PATH" envDefault:"/secrets/vault"`
 
 	Exclusive bool
 }
@@ -55,12 +56,18 @@ func (s *System) Build() (*Details, error) {
 }
 
 func (s *System) buildVault() (*Details, error) {
-	key := &Details{}
-	vh := *s.VaultHelper
+  key := &Details{}
+  vh := *s.VaultHelper
 
-	if err := vh.GetSecrets(s.VaultDetails.DetailsPath); err != nil {
-		return key, logs.Errorf("failed to get detail secrets from vault: %v", err)
-	}
+  if s.VaultDetails.LocalPath != "" && s.VaultDetails.DetailsPath == "" {
+    if err := vh.GetLocalSecerts(s.VaultDetails.LocalPath); err != nil {
+      return key, logs.Errorf("failed to get local secrets from vault: %v", err)
+    }
+  } else if s.VaultDetails.DetailsPath != "" {
+    if err := vh.GetRemoteSecrets(s.VaultDetails.DetailsPath); err != nil {
+      return key, logs.Errorf("failed to get detail secrets from vault: %v", err)
+    }
+  }
 	if vh.Secrets() == nil {
 		return key, logs.Error("no keycloak secrets found")
 	}

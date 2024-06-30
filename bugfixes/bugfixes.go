@@ -62,9 +62,16 @@ func (s *System) buildVault() (*Details, error) {
 	bf := &Details{}
 	vh := *s.VaultHelper
 
-	if err := vh.GetSecrets(s.VaultDetails.DetailsPath); err != nil {
-		return bf, logs.Errorf("failed to get bugfixes details: %v", err)
-	}
+  if s.VaultDetails.DetailsPath == "" && s.VaultDetails.LocalPath {
+    if err := vh.GetLocalSecrets(s.VaultDetails.LocalPath); err != nil {
+      return bf, logs.Errorf("faiuled to get local bugfix details: %v", err)
+    }
+  } else {
+    if err := vh.GetRemoteSecrets(s.VaultDetails.DetailsPath); err != nil {
+      return bf, logs.Errorf("failed to get bugfixes details: %v", err)
+	  }
+  }
+
 	if vh.Secrets() == nil {
 		return bf, logs.Error("no bugfixes secrets found")
 	}

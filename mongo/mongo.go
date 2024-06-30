@@ -17,6 +17,7 @@ type VaultDetails struct {
 	Path        string `env:"MONGO_VAULT_PATH" envDefault:"secret/data/chewedfeed/mongo"`
 	CredPath    string `env:"MONGO_VAULT_CRED_PATH" envDefault:"secret/data/chewedfeed/mongo"`
 	DetailsPath string `env:"MONGO_VAULT_DETAILS_PATH" envDefault:"secret/data/chewedfeed/details"`
+  LocalPath string `env:"MONGO_VAULT_LOCAL_PATH" envDefault:"/secret/mongo"`
 
 	ExpireTime time.Time
 }
@@ -85,7 +86,7 @@ func (s *System) buildVault() (*Details, error) {
 	vh := *s.VaultHelper
 
 	// Credentials
-	if err := vh.GetSecrets(s.VaultDetails.CredPath); err != nil {
+	if err := vh.GetRemoteSecrets(s.VaultDetails.CredPath); err != nil {
 		return nil, logs.Errorf("failed to get mongo secrets: %v", err)
 	}
 	if vh.Secrets() == nil {
@@ -105,9 +106,15 @@ func (s *System) buildVault() (*Details, error) {
 	rab.Password = password
 
 	// Details
-	if err := vh.GetSecrets(s.VaultDetails.DetailsPath); err != nil {
-		return nil, logs.Errorf("failed to get mongo details: %v", err)
-	}
+  if s.VaultDetails.LocalPath != "" && s.VaultDetails.DetailsPath == "" {
+    if err := vh.GetLocalSecrets(s.VaultDetails.LocalPath); err != nil {
+      return nil, logs.Errorf("failed to get local mongo secrets: %v", err)
+    }
+  } else if s.VaultDetails.DetailsPath != "" {
+    if err := vh.GetRemoteSecrets(s.VaultDetails.DetailsPath); err != nil {
+      return nil, logs.Errorf("failed to get mongo details: %v", err)
+    }
+  }
 	if vh.Secrets() == nil {
 		return nil, logs.Error("no mongo details found")
 	}
