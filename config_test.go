@@ -36,6 +36,22 @@ func (m *MockVaultHelper) Secrets() []vaulthelper.KVSecret {
 	return m.KVSecrets
 }
 
+func (m *MockVaultHelper) GetLocalSecrets(path string) error {
+	if path == "" {
+		return nil
+	}
+
+	return nil // or simulate an error if needed
+}
+
+func (m *MockVaultHelper) GetRemoteSecrets(path string) error {
+	if path == "" {
+		return nil
+	}
+
+	return nil // or simulate an error if needed
+}
+
 func (m *MockVaultHelper) LeaseDuration() int {
 	return m.Lease
 }
@@ -216,16 +232,16 @@ func TestInflux(t *testing.T) {
 }
 
 func TestBugfixes(t *testing.T) {
-  mockVault := &MockVaultHelper{
-    KVSecrets: []vaulthelper.KVSecret{
-      {Key: "bugfixes-agentid", Value: "testKey"},
-      {Key: "bugfixes-secret", Value: "testSecret"},
-    },
-  }
+	mockVault := &MockVaultHelper{
+		KVSecrets: []vaulthelper.KVSecret{
+			{Key: "bugfixes-agentid", Value: "testKey"},
+			{Key: "bugfixes-secret", Value: "testSecret"},
+		},
+	}
 
-  cfg, err := BuildLocalVH(mockVault, Bugfixes)
-  assert.NoError(t, err)
-  assert.Equal(t, "testSecret", cfg.Bugfixes.Logger.Secret)
+	cfg, err := BuildLocalVH(mockVault, Bugfixes)
+	assert.NoError(t, err)
+	assert.Equal(t, "testSecret", cfg.Bugfixes.Logger.Secret)
 }
 
 // Assuming ProjectConfigurator interface and Config structure are defined as shown previously

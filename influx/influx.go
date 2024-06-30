@@ -14,10 +14,10 @@ type VaultDetails struct {
 }
 
 type Details struct {
-	Host     string `env:"INFLUX_HOSTNAME" envDefault:"http://db.chewed-k8s.net:8086"`
-	Token    string `env:"INFLUX_TOKEN"`
-	Bucket   string `env:"INFLUX_BUCKET"`
-	Org      string `env:"INFLUX_ORG"`
+	Host   string `env:"INFLUX_HOSTNAME" envDefault:"http://db.chewed-k8s.net:8086"`
+	Token  string `env:"INFLUX_TOKEN"`
+	Bucket string `env:"INFLUX_BUCKET"`
+	Org    string `env:"INFLUX_ORG"`
 }
 
 type System struct {

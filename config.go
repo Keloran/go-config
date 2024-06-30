@@ -1,8 +1,8 @@
 package ConfigBuilder
 
 import (
-  "github.com/keloran/go-config/bugfixes"
-  "net/http"
+	"github.com/keloran/go-config/bugfixes"
+	"net/http"
 
 	"github.com/bugfixes/go-bugfixes/logs"
 	"github.com/keloran/go-config/database"
@@ -27,7 +27,7 @@ type Config struct {
 	Mongo    mongo.System
 	Rabbit   rabbit.System
 	Influx   influx.System
-  Bugfixes bugfixes.System
+	Bugfixes bugfixes.System
 
 	// Project level properties
 	ProjectProperties map[string]interface{}
@@ -183,29 +183,29 @@ func Influx(cfg *Config) error {
 }
 
 func Bugfixes(cfg *Config) error {
-  b := bugfixes.NewSystem()
-  if cfg.VaultHelper != nil {
-    vd := b.VaultDetails
-    if cfg.VaultPaths != (vault.Paths{}) {
-      if cfg.VaultPaths.BugFixes.Details != "" {
-        vd.DetailsPath = cfg.VaultPaths.BugFixes.Details
-      }
-    }
+	b := bugfixes.NewSystem()
+	if cfg.VaultHelper != nil {
+		vd := b.VaultDetails
+		if cfg.VaultPaths != (vault.Paths{}) {
+			if cfg.VaultPaths.BugFixes.Details != "" {
+				vd.DetailsPath = cfg.VaultPaths.BugFixes.Details
+			}
+		}
 
-    b.Setup(vd, *cfg.VaultHelper)
-  }
+		b.Setup(vd, *cfg.VaultHelper)
+	}
 
-  _, err := b.Build()
-  if err != nil {
-    return logs.Errorf("failed to build bugfixes: %v", err)
-  }
+	_, err := b.Build()
+	if err != nil {
+		return logs.Errorf("failed to build bugfixes: %v", err)
+	}
 
-  bf := &logs.BugFixes{}
-  bf.Setup(b.AgentKey, b.AgentSecret)
-  b.Logger = bf
+	bf := &logs.BugFixes{}
+	bf.Setup(b.AgentKey, b.AgentSecret)
+	b.Logger = bf
 
-  cfg.Bugfixes = *b
-  return nil
+	cfg.Bugfixes = *b
+	return nil
 }
 
 func Build(opts ...BuildOption) (*Config, error) {

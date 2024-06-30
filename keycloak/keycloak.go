@@ -85,7 +85,7 @@ func (s *System) buildVault() (*Details, error) {
 
 	host, err := vh.GetSecret("keycloak-host")
 	if err != nil {
-    if err.Error() != fmt.Sprint("key: 'keycloak-host' not found") {
+		if err.Error() != fmt.Sprint("key: 'keycloak-host' not found") {
 			return key, logs.Errorf("failed to get host: %v", err)
 		}
 		host = "https://keys.chewedfeed.com"

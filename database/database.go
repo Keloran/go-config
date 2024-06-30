@@ -3,8 +3,8 @@ package database
 import (
 	"context"
 	"fmt"
-  "github.com/jackc/pgx/v5"
-  "strconv"
+	"github.com/jackc/pgx/v5"
+	"strconv"
 	"time"
 
 	"github.com/bugfixes/go-bugfixes/logs"
@@ -92,7 +92,7 @@ func (s *System) buildVault() (*Details, error) {
 
 	// Get Details
 	if err := vh.GetSecrets(s.VaultDetails.DetailsPath); err != nil {
-		return rds, logs.Errorf("failed to get detail secrets from vault: %v", err)
+		return rds, logs.Errorf("failed to get local secrets from vault: %v", err)
 	}
 	if vh.Secrets() == nil {
 		return rds, logs.Error("no rds detail secrets found")
@@ -128,29 +128,29 @@ func (s *System) buildVault() (*Details, error) {
 	}
 	rds.Host = host
 
-  s.ExpireTime = time.Now().Add(time.Duration(vh.LeaseDuration()) * time.Second)
+	s.ExpireTime = time.Now().Add(time.Duration(vh.LeaseDuration()) * time.Second)
 	s.Details = *rds
 
 	return rds, nil
 }
 
 func (s *System) GetPGXClient(ctx context.Context) (*pgx.Conn, error) {
-  if time.Now().Unix() > s.VaultDetails.ExpireTime.Unix() {
-    s.buildVault()
-  }
+	if time.Now().Unix() > s.VaultDetails.ExpireTime.Unix() {
+		s.buildVault()
+	}
 
-  client, err := pgx.Connect(ctx, fmt.Sprintf("postgres://%s:%s@%s:%d/%s", s.User, s.Password, s.Host, s.Port, s.DBName))
-  if err != nil {
-    return nil, logs.Errorf("failed to get db client: %v", err)
-  }
+	client, err := pgx.Connect(ctx, fmt.Sprintf("postgres://%s:%s@%s:%d/%s", s.User, s.Password, s.Host, s.Port, s.DBName))
+	if err != nil {
+		return nil, logs.Errorf("failed to get db client: %v", err)
+	}
 
-  return client, nil
+	return client, nil
 }
 
 func (s *System) ClosePGX(ctx context.Context, conn pgx.Conn) error {
-  if err := conn.Close(ctx); err != nil {
-    return logs.Errorf("failed to close db client: %v", err)
-  }
+	if err := conn.Close(ctx); err != nil {
+		return logs.Errorf("failed to close db client: %v", err)
+	}
 
-  return nil
+	return nil
 }
