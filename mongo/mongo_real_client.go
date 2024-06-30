@@ -1,13 +1,13 @@
 package mongo
 
 import (
-  "context"
-  "fmt"
-  "time"
+	"context"
+	"fmt"
+	"time"
 
-  "github.com/bugfixes/go-bugfixes/logs"
-  "go.mongodb.org/mongo-driver/mongo"
-  "go.mongodb.org/mongo-driver/mongo/options"
+	"github.com/bugfixes/go-bugfixes/logs"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type RealMongoOperations struct {

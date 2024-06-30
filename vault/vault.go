@@ -13,7 +13,7 @@ import (
 
 type Path struct {
 	Details     string
-  Local string
+	Local       string
 	Credentials string
 }
 
@@ -23,7 +23,7 @@ type Paths struct {
 	Mongo    Path
 	Rabbit   Path
 	Influx   Path
-  BugFixes Path
+	BugFixes Path
 }
 
 // System is the vault config

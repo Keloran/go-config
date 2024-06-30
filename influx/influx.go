@@ -11,14 +11,13 @@ import (
 type VaultDetails struct {
 	CredsPath   string `env:"INFLUX_VAULT_CREDS_PATH" envDefault:"secret/data/chewedfeed/influx"`
 	DetailsPath string `env:"INFLUX_VAULT_DETAILS_PATH" envDefault:"secret/data/chewedfeed/details"`
-  LocalPath string `env:"INFLUX_VAULT_LOCAL_PATH" envDefault:"/secrets/influx"`
 }
 
 type Details struct {
-	Host     string `env:"INFLUX_HOSTNAME" envDefault:"http://db.chewed-k8s.net:8086"`
-	Token    string `env:"INFLUX_TOKEN"`
-	Bucket   string `env:"INFLUX_BUCKET"`
-	Org      string `env:"INFLUX_ORG"`
+	Host   string `env:"INFLUX_HOSTNAME" envDefault:"http://db.chewed-k8s.net:8086"`
+	Token  string `env:"INFLUX_TOKEN"`
+	Bucket string `env:"INFLUX_BUCKET"`
+	Org    string `env:"INFLUX_ORG"`
 }
 
 type System struct {
@@ -64,13 +63,7 @@ func (s *System) buildVault() (*Details, error) {
 	vh := *s.VaultHelper
 
 	// Get Credentials
-  if s.VaultDetails.LocalPath != "" && s.VaultDetails.DetailsPath == "" {
-    if err := vh.GetLocalSecrets(s.VaultDetails.LocalPath); err != nil {
-      return in, logs.Errorf("failed to get local secrets from local vault: %v", err)
-    }
-  }
-
-	if err := vh.GetRemoteSecrets(s.VaultDetails.DetailsPath); err != nil {
+	if err := vh.GetSecrets(s.VaultDetails.DetailsPath); err != nil {
 		return in, logs.Errorf("failed to get detail secrets from vault: %v", err)
 	}
 	if vh.Secrets() == nil {
