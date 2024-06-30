@@ -106,9 +106,9 @@ func (s *System) buildGeneric() (*Details, error) {
 	return key, nil
 }
 
-func (k *System) GetClient(ctx context.Context) (*gocloak.GoCloak, *gocloak.JWT, error) {
-	client := gocloak.NewClient(k.Host)
-	token, err := client.LoginClient(ctx, k.Client, k.Secret, k.Realm)
+func (s *System) GetClient(ctx context.Context) (*gocloak.GoCloak, *gocloak.JWT, error) {
+	client := gocloak.NewClient(s.Host)
+	token, err := client.LoginClient(ctx, s.Client, s.Secret, s.Realm)
 	if err != nil {
 		return nil, nil, logs.Errorf("failed to login client: %v", err)
 	}
