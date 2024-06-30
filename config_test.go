@@ -277,7 +277,7 @@ func TestProjectBuild(t *testing.T) {
 		os.Clearenv()
 
 		cfgNoProps, _ := Build(Local)
-		assert.Equal(t, map[string]interface{}(map[string]interface{}(nil)), cfgNoProps.ProjectProperties)
+		assert.Equal(t, map[string]interface{}(nil), cfgNoProps.ProjectProperties)
 
 		cfg, err := Build(Local, WithProjectConfigurator(MockProjectConfigurator{}))
 		assert.NoError(t, err)
