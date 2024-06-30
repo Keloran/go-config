@@ -36,6 +36,22 @@ func (m *MockVaultHelper) Secrets() []vaulthelper.KVSecret {
 	return m.KVSecrets
 }
 
+func (m *MockVaultHelper) GetLocalSecrets(path string) error {
+	if path == "" {
+		return nil
+	}
+
+	return nil // or simulate an error if needed
+}
+
+func (m *MockVaultHelper) GetRemoteSecrets(path string) error {
+	if path == "" {
+		return nil
+	}
+
+	return nil // or simulate an error if needed
+}
+
 func (m *MockVaultHelper) LeaseDuration() int {
 	return m.Lease
 }
