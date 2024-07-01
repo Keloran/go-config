@@ -9,7 +9,7 @@ require (
 	github.com/bugfixes/go-bugfixes v0.12.18
 	github.com/caarlos0/env/v8 v8.0.0
 	github.com/jackc/pgx/v5 v5.6.0
-	github.com/keloran/vault-helper v1.0.1
+	github.com/keloran/vault-helper v1.1.0
 	github.com/stretchr/testify v1.9.0
 	go.mongodb.org/mongo-driver v1.16.0
 	go.uber.org/mock v0.4.0
