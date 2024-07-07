@@ -18,12 +18,13 @@ type Path struct {
 }
 
 type Paths struct {
-	Database Path
-	Keycloak Path
-	Mongo    Path
-	Rabbit   Path
-	Influx   Path
-	BugFixes Path
+	Database  Path
+	Keycloak  Path
+	Mongo     Path
+	Rabbit    Path
+	Influx    Path
+	BugFixes  Path
+	Authentik Path
 }
 
 // System is the vault config
