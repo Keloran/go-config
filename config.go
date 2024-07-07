@@ -139,7 +139,7 @@ func Keycloak(cfg *Config) error {
 func Authentik(cfg *Config) error {
 	a := authentik.NewSystem()
 	if cfg.VaultHelper != nil {
-		vd := keycloak.VaultDetails{}
+		vd := authentik.VaultDetails{}
 		if cfg.VaultPaths != (vault.Paths{}) {
 			if cfg.VaultPaths.Authentik.Details != "" {
 				vd.DetailsPath = cfg.VaultPaths.Authentik.Details
@@ -153,7 +153,7 @@ func Authentik(cfg *Config) error {
 	if err != nil {
 		return logs.Errorf("failed to build authentik: %v", err)
 	}
-	cfg.Keycloak = *a
+	cfg.Authentik = *a
 	return nil
 }
 
