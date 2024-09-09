@@ -8,7 +8,7 @@ require (
 	github.com/Nerzal/gocloak/v13 v13.9.0
 	github.com/bugfixes/go-bugfixes v0.12.18
 	github.com/caarlos0/env/v8 v8.0.0
-	github.com/jackc/pgx/v5 v5.6.0
+	github.com/jackc/pgx/v5 v5.7.0
 	github.com/keloran/vault-helper v1.1.0
 	github.com/stretchr/testify v1.9.0
 	go.mongodb.org/mongo-driver v1.16.1
@@ -36,7 +36,7 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hashicorp/vault/api v1.14.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
-	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
+	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/klauspost/compress v1.17.8 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
