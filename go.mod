@@ -11,7 +11,7 @@ require (
 	github.com/jackc/pgx/v5 v5.7.1
 	github.com/keloran/vault-helper v1.1.0
 	github.com/stretchr/testify v1.9.0
-	go.mongodb.org/mongo-driver v1.17.0
+	go.mongodb.org/mongo-driver v1.17.1
 	go.uber.org/mock v0.4.0
 	goauthentik.io/api/v3 v3.2024083.2
 )
