@@ -13,7 +13,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	go.mongodb.org/mongo-driver v1.17.1
 	go.uber.org/mock v0.5.0
-	goauthentik.io/api/v3 v3.2024105.5
+	goauthentik.io/api/v3 v3.2024120.1
 )
 
 require (
