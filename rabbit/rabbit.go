@@ -135,7 +135,7 @@ func (s *System) buildVault() (*Details, error) {
 }
 
 func (s *System) GetRabbitQueue() (interface{}, error) {
-	if time.Now().Unix() > s.VaultDetails.ExpireTime.Unix() {
+	if s.VaultHelper != nil && time.Now().Unix() > s.VaultDetails.ExpireTime.Unix() {
 		_, err := s.Build()
 		if err != nil {
 			return nil, logs.Errorf("rabbit: unable to build rabbit: %v", err)

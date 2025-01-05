@@ -17,7 +17,7 @@ type RealMongoOperations struct {
 }
 
 func (r *RealMongoOperations) GetMongoClient(ctx context.Context, m System) (*mongo.Client, error) {
-	if time.Now().Unix() > m.VaultDetails.ExpireTime.Unix() {
+	if m.VaultHelper != nil && time.Now().Unix() > m.VaultDetails.ExpireTime.Unix() {
 		mr := NewSystem()
 		mr.Setup(m.VaultDetails, *mr.VaultHelper)
 		_, err := mr.Build()
@@ -37,7 +37,7 @@ func (r *RealMongoOperations) GetMongoClient(ctx context.Context, m System) (*mo
 }
 
 func (r *RealMongoOperations) GetMongoDatabase(m System) (*mongo.Database, error) {
-	if time.Now().Unix() > m.VaultDetails.ExpireTime.Unix() {
+	if m.VaultHelper != nil && time.Now().Unix() > m.VaultDetails.ExpireTime.Unix() {
 		mr := NewSystem()
 		mr.Setup(m.VaultDetails, *mr.VaultHelper)
 		_, err := mr.Build()
@@ -52,7 +52,7 @@ func (r *RealMongoOperations) GetMongoDatabase(m System) (*mongo.Database, error
 }
 
 func (r *RealMongoOperations) GetMongoCollection(m System, collection string) (*mongo.Collection, error) {
-	if time.Now().Unix() > m.VaultDetails.ExpireTime.Unix() {
+	if m.VaultHelper != nil && time.Now().Unix() > m.VaultDetails.ExpireTime.Unix() {
 		mr := NewSystem()
 		mr.Setup(m.VaultDetails, *mr.VaultHelper)
 		_, err := mr.Build()
