@@ -135,11 +135,11 @@ func (s *System) buildVault() (*Details, error) {
 }
 
 func (s *System) GetPGXClient(ctx context.Context) (*pgx.Conn, error) {
-	if time.Now().Unix() > s.VaultDetails.ExpireTime.Unix() {
+	if s.VaultHelper != nil && time.Now().Unix() > s.VaultDetails.ExpireTime.Unix() {
 		_, err := s.buildVault()
-    if err != nil {
-      return nil, logs.Errorf("failed to build vault: %v", err)
-    }
+		if err != nil {
+			return nil, logs.Errorf("failed to build vault: %v", err)
+		}
 	}
 
 	client, err := pgx.Connect(ctx, fmt.Sprintf("postgres://%s:%s@%s:%d/%s", s.User, s.Password, s.Host, s.Port, s.DBName))
