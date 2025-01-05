@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	keycloakVersion = "21.1"
+	keycloakVersion = "24.0"
 	adminUser       = "admin"
 	adminPassword   = "admin"
 	testRealm       = "test-realm"
@@ -27,9 +27,9 @@ const (
 func TestBuildVault(t *testing.T) {
 	mockVault := &vaultHelper.MockVaultHelper{
 		KVSecrets: []vaultHelper.KVSecret{
-			{Key: "keycloak-client", Value: "testClient"},
-			{Key: "keycloak-secret", Value: "testSecret"},
-			{Key: "keycloak-realm", Value: "testRealm"},
+			{Key: "keycloak-client", Value: testClient},
+			{Key: "keycloak-secret", Value: testSecret},
+			{Key: "keycloak-realm", Value: testRealm},
 		},
 	}
 
@@ -44,22 +44,22 @@ func TestBuildVault(t *testing.T) {
 
 	assert.NoError(t, err)
 
-	assert.Equal(t, "testClient", kc.Client)
-	assert.Equal(t, "testSecret", kc.Secret)
-	assert.Equal(t, "testRealm", kc.Realm)
+	assert.Equal(t, testClient, kc.Client)
+	assert.Equal(t, testSecret, kc.Secret)
+	assert.Equal(t, testRealm, kc.Realm)
 	assert.Equal(t, "https://keys.chewedfeed.com", kc.Host)
 }
 
 func TestBuildGeneric(t *testing.T) {
 	os.Clearenv()
 
-	if err := os.Setenv("KEYCLOAK_CLIENT", "testClient"); err != nil {
+	if err := os.Setenv("KEYCLOAK_CLIENT", testClient); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.Setenv("KEYCLOAK_SECRET", "testSecret"); err != nil {
+	if err := os.Setenv("KEYCLOAK_SECRET", testSecret); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.Setenv("KEYCLOAK_REALM", "testRealm"); err != nil {
+	if err := os.Setenv("KEYCLOAK_REALM", testRealm); err != nil {
 		t.Fatal(err)
 	}
 
@@ -67,20 +67,20 @@ func TestBuildGeneric(t *testing.T) {
 	kc, err := d.Build()
 	assert.NoError(t, err)
 
-	assert.Equal(t, "testClient", kc.Client)
-	assert.Equal(t, "testSecret", kc.Secret)
-	assert.Equal(t, "testRealm", kc.Realm)
+	assert.Equal(t, testClient, kc.Client)
+	assert.Equal(t, testSecret, kc.Secret)
+	assert.Equal(t, testRealm, kc.Realm)
 	assert.Equal(t, "https://keys.chewedfeed.com", kc.Host)
 }
 
 func setupKeycloak(ctx context.Context) (*key.KeycloakContainer, error) {
 	kc, err := key.Run(ctx,
-		"keycloak/keycloak:24.0",
+		fmt.Sprintf("keycloak/keycloak:%s", keycloakVersion),
 		testcontainers.WithWaitStrategy(wait.ForListeningPort("8080/tcp")),
 		key.WithContextPath("/auth"),
 		//key.WithRealmImportFile("../testdata/realm-export.json"),
-		key.WithAdminUsername("admin"),
-		key.WithAdminPassword("admin"),
+		key.WithAdminUsername(adminUser),
+		key.WithAdminPassword(adminPassword),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start keycloak: %v", err)
