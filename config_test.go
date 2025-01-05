@@ -79,6 +79,14 @@ func TestConfig(t *testing.T) {
 	})
 }
 
+func TestNewConfigNoVault(t *testing.T) {
+	t.Run("test config no vault", func(t *testing.T) {
+		cfg := NewConfigNoVault()
+		err := cfg.Build(Local)
+		assert.NoError(t, err)
+	})
+}
+
 func TestBuild(t *testing.T) {
 	t.Run("default values", func(t *testing.T) {
 		os.Clearenv() // Clear all environment variables
