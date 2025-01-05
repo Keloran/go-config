@@ -1,7 +1,6 @@
 package ConfigBuilder
 
 import (
-	"github.com/keloran/go-config/auth/authentik"
 	"github.com/keloran/go-config/bugfixes"
 	"net/http"
 
@@ -21,15 +20,14 @@ type Config struct {
 	VaultPaths  vault.Paths
 	VaultInject bool
 
-	Local     local.System
-	Vault     vault.System
-	Database  database.System
-	Keycloak  keycloak.System
-	Mongo     mongo.System
-	Rabbit    rabbit.System
-	Influx    influx.System
-	Bugfixes  bugfixes.System
-	Authentik authentik.System
+	Local    local.System
+	Vault    vault.System
+	Database database.System
+	Keycloak keycloak.System
+	Mongo    mongo.System
+	Rabbit   rabbit.System
+	Influx   influx.System
+	Bugfixes bugfixes.System
 
 	// Project level properties
 	ProjectProperties map[string]interface{}
@@ -41,6 +39,10 @@ func NewConfig(vh vaultHelper.VaultHelper) *Config {
 	return &Config{
 		VaultHelper: &vh,
 	}
+}
+
+func NewConfigNoVault() *Config {
+	return &Config{}
 }
 
 func Local(cfg *Config) error {
@@ -133,27 +135,6 @@ func Keycloak(cfg *Config) error {
 		return logs.Errorf("failed to build keycloak: %v", err)
 	}
 	cfg.Keycloak = *k
-	return nil
-}
-
-func Authentik(cfg *Config) error {
-	a := authentik.NewSystem()
-	if cfg.VaultHelper != nil {
-		vd := authentik.VaultDetails{}
-		if cfg.VaultPaths != (vault.Paths{}) {
-			if cfg.VaultPaths.Authentik.Details != "" {
-				vd.DetailsPath = cfg.VaultPaths.Authentik.Details
-			}
-		}
-
-		a.Setup(vd, *cfg.VaultHelper)
-	}
-
-	_, err := a.Build()
-	if err != nil {
-		return logs.Errorf("failed to build authentik: %v", err)
-	}
-	cfg.Authentik = *a
 	return nil
 }
 
