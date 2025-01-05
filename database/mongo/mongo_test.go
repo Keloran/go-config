@@ -1,11 +1,32 @@
 package mongo
 
 import (
+	"context"
+	"fmt"
+	"github.com/testcontainers/testcontainers-go"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/testcontainers/testcontainers-go/modules/mongodb"
 )
+
+func setupMongo(ctx context.Context) (*mongodb.MongoDBContainer, error) {
+	mc, err := mongodb.Run(ctx, "mongo:latest")
+	if err != nil {
+		return nil, fmt.Errorf("failed to start mongo: %v", err)
+	}
+
+	return mc, nil
+}
+
+func shutdownMongo(ctx context.Context, mc *mongodb.MongoDBContainer) error {
+	if err := testcontainers.TerminateContainer(mc); err != nil {
+		return fmt.Errorf("failed to terminate container: %v", err)
+	}
+
+	return nil
+}
 
 func TestBuildCollections(t *testing.T) {
 	os.Clearenv() // Clear all environment variables
