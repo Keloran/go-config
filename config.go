@@ -1,17 +1,18 @@
 package ConfigBuilder
 
 import (
-	"github.com/keloran/go-config/bugfixes"
 	"net/http"
 
 	"github.com/bugfixes/go-bugfixes/logs"
 	"github.com/keloran/go-config/auth/keycloak"
-	"github.com/keloran/go-config/database"
+	"github.com/keloran/go-config/bugfixes"
+	"github.com/keloran/go-config/database/mongo"
+	"github.com/keloran/go-config/database/postgres"
 	"github.com/keloran/go-config/influx"
 	"github.com/keloran/go-config/local"
-	"github.com/keloran/go-config/mongo"
 	"github.com/keloran/go-config/rabbit"
 	"github.com/keloran/go-config/vault"
+
 	vaultHelper "github.com/keloran/vault-helper"
 )
 
@@ -22,7 +23,7 @@ type Config struct {
 
 	Local    local.System
 	Vault    vault.System
-	Database database.System
+	Database postgres.System
 	Keycloak keycloak.System
 	Mongo    mongo.System
 	Rabbit   rabbit.System
@@ -69,9 +70,9 @@ func Vault(cfg *Config) error {
 }
 
 func Database(cfg *Config) error {
-	d := database.NewSystem()
+	d := postgres.NewSystem()
 	if cfg.VaultHelper != nil {
-		vd := database.VaultDetails{}
+		vd := postgres.VaultDetails{}
 		if cfg.VaultPaths != (vault.Paths{}) {
 			if cfg.VaultPaths.Database.Details != "" {
 				vd.DetailsPath = cfg.VaultPaths.Database.Details
