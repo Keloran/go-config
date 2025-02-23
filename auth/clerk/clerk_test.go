@@ -61,3 +61,21 @@ func TestBuildVaultNoKey(t *testing.T) {
 	assert.Equal(t, "testKey", ck.Key)
 	assert.Equal(t, "testPublicKey", ck.PublicKey)
 }
+
+func TestBuildVaultNoPublicKey(t *testing.T) {
+	mockVault := &vaultHelper.MockVaultHelper{
+		KVSecrets: []vaultHelper.KVSecret{
+			{Key: "clerk_key", Value: "testKey"},
+		},
+	}
+
+	vd := &vaultHelper.VaultDetails{
+		DetailsPath: "tester",
+	}
+	c := NewSystem()
+	c.Setup(*vd, mockVault)
+	ck, err := c.Build()
+	assert.NoError(t, err)
+	assert.Equal(t, "testKey", ck.Key)
+	assert.Equal(t, "", ck.PublicKey)
+}

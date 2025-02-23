@@ -2,6 +2,7 @@ package clerk
 
 import (
 	"context"
+	"fmt"
 	"github.com/caarlos0/env/v8"
 	vaultHelper "github.com/keloran/vault-helper"
 )
@@ -76,7 +77,9 @@ func (s *System) buildVault() (*Details, error) {
 	if clerk.PublicKey == "" {
 		secret, err := vh.GetSecret("clerk_public_key")
 		if err != nil {
-			return clerk, err
+			if err.Error() != fmt.Sprint("key: 'clerk_public_key' not found") {
+				return clerk, err
+			}
 		}
 		clerk.PublicKey = secret
 	}
