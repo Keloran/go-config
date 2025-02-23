@@ -75,7 +75,7 @@ func (s *System) buildVault() (*Details, error) {
 		return in, logs.Error("no influx cred serets found")
 	}
 
-	if in.Token == "" {
+	if s.Details.Token == "" {
 		secret, err := vh.GetSecret("influx-token")
 		if err != nil {
 			return in, logs.Errorf("failed to get token: %v", err)
@@ -83,7 +83,7 @@ func (s *System) buildVault() (*Details, error) {
 		in.Token = secret
 	}
 
-	if in.Bucket == "" {
+	if s.Details.Bucket == "" {
 		secret, err := vh.GetSecret("influx-bucket")
 		if err != nil {
 			return in, logs.Errorf("failed to get bucket: %v", err)
@@ -91,7 +91,7 @@ func (s *System) buildVault() (*Details, error) {
 		in.Bucket = secret
 	}
 
-	if in.Org == "" {
+	if s.Details.Org == "" {
 		secret, err := vh.GetSecret("influx-org")
 		if err != nil {
 			return in, logs.Errorf("failed to get org: %v", err)
@@ -99,7 +99,8 @@ func (s *System) buildVault() (*Details, error) {
 		in.Org = secret
 	}
 
-	if in.Host == "" {
+	// get the host based on the token, since host has a default in env
+	if s.Details.Token == "" {
 		secret, err := vh.GetSecret("influx-hostname")
 		if err != nil {
 			if err.Error() != fmt.Sprint("key: 'influx-hostname' not found") {

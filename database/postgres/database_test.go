@@ -9,6 +9,7 @@ import (
 )
 
 func TestBuildVault(t *testing.T) {
+	os.Clearenv()
 	mockVault := &vaultHelper.MockVaultHelper{
 		KVSecrets: []vaultHelper.KVSecret{
 			{Key: "password", Value: "testPassword"},

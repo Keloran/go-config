@@ -97,20 +97,24 @@ func (s *System) buildVault() (*Details, error) {
 		return nil, logs.Error("no mongo secrets found")
 	}
 
-	if rab.Username == "" {
+	if s.Details.Username == "" {
 		secret, err := vh.GetSecret("username")
 		if err != nil {
 			return nil, logs.Errorf("failed to get username: %v", err)
 		}
 		rab.Username = secret
+	} else {
+		rab.Username = s.Details.Username
 	}
 
-	if rab.Password == "" {
+	if s.Details.Password == "" {
 		secret, err := vh.GetSecret("password")
 		if err != nil {
 			return nil, logs.Errorf("failed to get password: %v", err)
 		}
 		rab.Password = secret
+	} else {
+		rab.Password = s.Details.Password
 	}
 
 	// Details
@@ -121,20 +125,24 @@ func (s *System) buildVault() (*Details, error) {
 		return nil, logs.Error("no mongo details found")
 	}
 
-	if rab.Host == "" {
+	if s.Details.Host == "" {
 		secret, err := vh.GetSecret("mongo-hostname")
 		if err != nil {
 			return nil, logs.Errorf("failed to get hostname: %v", err)
 		}
 		rab.Host = secret
+	} else {
+		rab.Host = s.Details.Host
 	}
 
-	if rab.Database == "" {
+	if s.Details.Database == "" {
 		secret, err := vh.GetSecret("mongo-db")
 		if err != nil {
 			return nil, logs.Errorf("failed to get database: %v", err)
 		}
 		rab.Database = secret
+	} else {
+		rab.Database = s.Details.Database
 	}
 
 	preCollections, err := vh.GetSecret("mongo-collections")

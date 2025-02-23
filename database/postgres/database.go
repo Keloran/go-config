@@ -83,20 +83,24 @@ func (s *System) buildVault() (*Details, error) {
 		return rds, logs.Error("no rds cred serets found")
 	}
 
-	if rds.User == "" {
+	if s.Details.User == "" {
 		secret, err := vh.GetSecret("username")
 		if err != nil {
 			return nil, logs.Errorf("failed to get username: %v", err)
 		}
 		rds.User = secret
+	} else {
+		rds.User = s.Details.User
 	}
 
-	if rds.Password == "" {
+	if s.Details.Password == "" {
 		secret, err := vh.GetSecret("password")
 		if err != nil {
 			return nil, logs.Errorf("failed to get password: %v", err)
 		}
 		rds.Password = secret
+	} else {
+		rds.Password = s.Details.Password
 	}
 
 	// Get Details
@@ -107,7 +111,8 @@ func (s *System) buildVault() (*Details, error) {
 		return rds, logs.Error("no rds detail secrets found")
 	}
 
-	if rds.Port == 0 {
+	// get the port based on the username, since port has a default in env
+	if s.Details.User == "" {
 		secret, err := vh.GetSecret("rds-port")
 		if err != nil {
 			if err.Error() != fmt.Sprint("key: 'rds-port' not found") {
@@ -122,17 +127,26 @@ func (s *System) buildVault() (*Details, error) {
 			}
 			rds.Port = iport
 		}
+	} else {
+		rds.Port = s.Details.Port
 	}
 
-	if rds.DBName == "" {
+	// get the db based on the username, since db has a default in env
+	if s.Details.User == "" {
 		secret, err := vh.GetSecret("rds-db")
 		if err != nil {
-			return nil, logs.Errorf("failed to get db: %v", err)
+			if err.Error() != fmt.Sprint("key: 'rds-db' not found") {
+				return nil, logs.Errorf("failed to get db: %v", err)
+			}
+			secret = "postgres"
 		}
 		rds.DBName = secret
+	} else {
+		rds.DBName = s.Details.DBName
 	}
 
-	if rds.Host == "" {
+	// get the host based on the username, since host has a default in env
+	if s.Details.User == "" {
 		secret, err := vh.GetSecret("rds-hostname")
 		if err != nil {
 			if err.Error() != fmt.Sprint("key: 'rds-hostname' not found") {
@@ -141,6 +155,8 @@ func (s *System) buildVault() (*Details, error) {
 			secret = "db.chewed-k8s.net"
 		}
 		rds.Host = secret
+	} else {
+		rds.Host = s.Details.Host
 	}
 
 	s.ExpireTime = time.Now().Add(time.Duration(vh.LeaseDuration()) * time.Second)

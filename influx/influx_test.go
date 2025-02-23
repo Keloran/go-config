@@ -33,6 +33,7 @@ func TestBuildGeneric(t *testing.T) {
 }
 
 func TestBuildVault(t *testing.T) {
+	os.Clearenv()
 	mockVault := &vaultHelper.MockVaultHelper{
 		KVSecrets: []vaultHelper.KVSecret{
 			{Key: "influx-token", Value: "testToken"},

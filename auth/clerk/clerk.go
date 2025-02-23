@@ -66,15 +66,17 @@ func (s *System) buildVault() (*Details, error) {
 		return clerk, nil
 	}
 
-	if clerk.Key == "" {
+	if s.Details.Key == "" {
 		secret, err := vh.GetSecret("clerk_key")
 		if err != nil {
 			return clerk, err
 		}
 		clerk.Key = secret
+	} else {
+		clerk.Key = s.Details.Key
 	}
 
-	if clerk.PublicKey == "" {
+	if s.Details.PublicKey == "" {
 		secret, err := vh.GetSecret("clerk_public_key")
 		if err != nil {
 			if err.Error() != fmt.Sprint("key: 'clerk_public_key' not found") {
@@ -82,6 +84,8 @@ func (s *System) buildVault() (*Details, error) {
 			}
 		}
 		clerk.PublicKey = secret
+	} else {
+		clerk.PublicKey = s.Details.PublicKey
 	}
 
 	s.Details = *clerk

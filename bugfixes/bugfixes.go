@@ -75,23 +75,27 @@ func (s *System) buildVault() (*Details, error) {
 		return bf, logs.Error("no bugfixes secrets found")
 	}
 
-	if bf.AgentKey == "" {
+	if s.Details.AgentKey == "" {
 		secret, err := vh.GetSecret("bugfixes-agentid")
 		if err != nil {
 			return bf, logs.Errorf("failed to get agentid: %v", err)
 		}
 		bf.AgentKey = secret
+	} else {
+		bf.AgentKey = s.Details.AgentKey
 	}
 
-	if bf.AgentSecret == "" {
+	if s.Details.AgentSecret == "" {
 		secret, err := vh.GetSecret("bugfixes-secret")
 		if err != nil {
 			return bf, logs.Errorf("failed to get secret: %v", err)
 		}
 		bf.AgentSecret = secret
+	} else {
+		bf.AgentSecret = s.Details.AgentSecret
 	}
 
-	if bf.Server == "" {
+	if s.Details.Server == "" {
 		secret, err := vh.GetSecret("bugfixes-server")
 		if err != nil {
 			if err.Error() != fmt.Sprint("key: 'bugfixes-server' not found") {
@@ -100,6 +104,8 @@ func (s *System) buildVault() (*Details, error) {
 			secret = "https://api.bugfix.es/v1"
 		}
 		bf.Server = secret
+	} else {
+		bf.Server = s.Details.Server
 	}
 
 	if !strings.HasPrefix(bf.Server, "http") {
