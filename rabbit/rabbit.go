@@ -99,53 +99,66 @@ func (s *System) buildVault() (*Details, error) {
 		return rab, logs.Error("no rabbit secrets found")
 	}
 
-	if rab.Username == "" {
+	if s.Details.Username == "" {
 		secret, err := vh.GetSecret("rabbit-username")
 		if err != nil {
 			return nil, logs.Errorf("failed to get username: %v", err)
 		}
 		rab.Username = secret
+	} else {
+		rab.Username = s.Details.Username
 	}
 
-	if rab.Password == "" {
+	if s.Details.Password == "" {
 		secret, err := vh.GetSecret("rabbit-password")
 		if err != nil {
 			return nil, logs.Errorf("failed to get password: %v", err)
 		}
 		rab.Password = secret
+	} else {
+		rab.Password = s.Details.Password
 	}
 
-	if rab.Host == "" {
+	if s.Details.Host == "" {
 		secret, err := vh.GetSecret("rabbit-hostname")
 		if err != nil {
 			return nil, logs.Errorf("failed to get hostname: %v", err)
 		}
 		rab.Host = secret
+	} else {
+		rab.Host = s.Details.Host
 	}
 
-	if rab.VHost == "" {
+	if s.Details.VHost == "" {
 		secret, err := vh.GetSecret("rabbit-vhost")
 		if err != nil {
 			return nil, logs.Errorf("failed to get vhost: %v", err)
 		}
 		rab.VHost = secret
+	} else {
+		rab.VHost = s.Details.VHost
 	}
 
-	if rab.ManagementHost == "" {
+	if s.Details.ManagementHost == "" {
 		secret, err := vh.GetSecret("rabbit-management-hostname")
 		if err != nil {
 			return nil, logs.Errorf("failed to get management host: %v", err)
 		}
 		rab.ManagementHost = secret
+	} else {
+		rab.ManagementHost = s.Details.ManagementHost
 	}
 
-	if rab.Queue == "" {
+	if s.Details.Queue == "" {
 		secret, err := vh.GetSecret("rabbit-queue")
 		if err != nil {
 			return nil, logs.Errorf("failed to get queue: %v", err)
 		}
 		rab.Queue = secret
+	} else {
+		rab.Queue = s.Details.Queue
 	}
+	
 	s.Details = *rab
 
 	return rab, nil

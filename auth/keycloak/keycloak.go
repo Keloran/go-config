@@ -70,31 +70,37 @@ func (s *System) buildVault() (*Details, error) {
 		return key, logs.Error("no keycloak secrets found")
 	}
 
-	if key.Client == "" {
+	if s.Details.Client == "" {
 		secret, err := vh.GetSecret("keycloak-client")
 		if err != nil {
 			return key, logs.Errorf("failed to get clientid: %v", err)
 		}
 		key.Client = secret
+	} else {
+		key.Client = s.Details.Client
 	}
 
-	if key.Secret == "" {
+	if s.Details.Secret == "" {
 		secret, err := vh.GetSecret("keycloak-secret")
 		if err != nil {
 			return key, logs.Errorf("failed to get secret: %v", err)
 		}
 		key.Secret = secret
+	} else {
+		key.Secret = s.Details.Secret
 	}
 
-	if key.Realm == "" {
+	if s.Details.Realm == "" {
 		secret, err := vh.GetSecret("keycloak-realm")
 		if err != nil {
 			return key, logs.Errorf("failed to get realm: %v", err)
 		}
 		key.Realm = secret
+	} else {
+		key.Realm = s.Details.Realm
 	}
 
-	if key.Host == "" {
+	if s.Details.Host == "" {
 		secret, err := vh.GetSecret("keycloak-host")
 		if err != nil {
 			if err.Error() != fmt.Sprint("key: 'keycloak-host' not found") {
@@ -103,6 +109,8 @@ func (s *System) buildVault() (*Details, error) {
 			secret = "https://keys.chewedfeed.com"
 		}
 		key.Host = secret
+	} else {
+		key.Host = s.Details.Host
 	}
 
 	s.Details = *key

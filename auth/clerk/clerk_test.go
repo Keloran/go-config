@@ -63,6 +63,7 @@ func TestBuildVaultNoKey(t *testing.T) {
 }
 
 func TestBuildVaultNoPublicKey(t *testing.T) {
+	os.Clearenv()
 	mockVault := &vaultHelper.MockVaultHelper{
 		KVSecrets: []vaultHelper.KVSecret{
 			{Key: "clerk_key", Value: "testKey"},

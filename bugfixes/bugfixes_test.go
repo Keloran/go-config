@@ -51,6 +51,7 @@ func TestBuildVault(t *testing.T) {
 }
 
 func TestBuildVaultNoHost(t *testing.T) {
+	os.Clearenv()
 	mockVault := &vaultHelper.MockVaultHelper{
 		KVSecrets: []vaultHelper.KVSecret{
 			{Key: "bugfixes-agentid", Value: "testKey"},

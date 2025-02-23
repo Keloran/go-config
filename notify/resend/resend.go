@@ -64,12 +64,14 @@ func (s *System) buildVault() (*Details, error) {
 		return resend, nil
 	}
 
-	if resend.Key == "" {
+	if s.Details.Key == "" {
 		secret, err := vh.GetSecret("resend_key")
 		if err != nil {
 			return resend, err
 		}
 		resend.Key = secret
+	} else {
+		resend.Key = s.Details.Key
 	}
 
 	s.Details = *resend
