@@ -1,4 +1,4 @@
-package clerk
+package resend
 
 import (
 	"context"
@@ -7,8 +7,7 @@ import (
 )
 
 type Details struct {
-	Key       string `env:"CLERK_SECRET_KEY" envDefault:""`
-	PublicKey string `env:"NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY" envDefault:""`
+	Key string `env:"RESEND_KEY" envDefault:""`
 }
 
 type System struct {
@@ -55,32 +54,24 @@ func (s *System) buildGeneric() (*Details, error) {
 }
 
 func (s *System) buildVault() (*Details, error) {
-	clerk := &Details{}
+	resend := &Details{}
 	vh := *s.VaultHelper
 
 	if err := vh.GetSecrets(s.VaultDetails.DetailsPath); err != nil {
-		return clerk, err
+		return resend, err
 	}
 	if vh.Secrets() == nil {
-		return clerk, nil
+		return resend, nil
 	}
 
-	if clerk.Key == "" {
-		secret, err := vh.GetSecret("clerk_key")
+	if resend.Key == "" {
+		secret, err := vh.GetSecret("resend_key")
 		if err != nil {
-			return clerk, err
+			return resend, err
 		}
-		clerk.Key = secret
+		resend.Key = secret
 	}
 
-	if clerk.PublicKey == "" {
-		secret, err := vh.GetSecret("clerk_public_key")
-		if err != nil {
-			return clerk, err
-		}
-		clerk.PublicKey = secret
-	}
-
-	s.Details = *clerk
-	return clerk, nil
+	s.Details = *resend
+	return resend, nil
 }

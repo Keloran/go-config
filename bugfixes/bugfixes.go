@@ -10,7 +10,7 @@ import (
 )
 
 type Details struct {
-	Server      string `env:"BUGIXES_SERVER" envDefault:"https://api.bugfix.es/v1"`
+	Server      string `env:"BUGFIXES_SERVER" envDefault:"https://api.bugfix.es/v1"`
 	AgentKey    string `env:"BUGFIXES_AGENT_KEY"`
 	AgentSecret string `env:"BUGFIXES_AGENT_SECRET"`
 }

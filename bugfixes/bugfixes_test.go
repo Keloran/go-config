@@ -17,7 +17,7 @@ func TestBuildGeneric(t *testing.T) {
 	if err := os.Setenv("BUGFIXES_AGENT_SECRET", "testSecret"); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.Setenv("BUGIXES_SERVER", "http://bob.bob"); err != nil {
+	if err := os.Setenv("BUGFIXES_SERVER", "http://bob.bob"); err != nil {
 		t.Fatal(err)
 	}
 
