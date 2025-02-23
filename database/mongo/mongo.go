@@ -73,11 +73,16 @@ func (s *System) Setup(vd VaultDetails, vh vaultHelper.VaultHelper) {
 }
 
 func (s *System) Build() (*Details, error) {
+	gen, err := s.buildGeneric()
+	if err != nil {
+		return nil, err
+	}
+
 	if s.VaultHelper != nil {
 		return s.buildVault()
 	}
 
-	return s.buildGeneric()
+	return gen, nil
 }
 
 func (s *System) buildVault() (*Details, error) {
@@ -92,17 +97,21 @@ func (s *System) buildVault() (*Details, error) {
 		return nil, logs.Error("no mongo secrets found")
 	}
 
-	username, err := vh.GetSecret("username")
-	if err != nil {
-		return nil, logs.Errorf("failed to get username: %v", err)
+	if rab.Username == "" {
+		secret, err := vh.GetSecret("username")
+		if err != nil {
+			return nil, logs.Errorf("failed to get username: %v", err)
+		}
+		rab.Username = secret
 	}
-	rab.Username = username
 
-	password, err := vh.GetSecret("password")
-	if err != nil {
-		return nil, logs.Errorf("failed to get password: %v", err)
+	if rab.Password == "" {
+		secret, err := vh.GetSecret("password")
+		if err != nil {
+			return nil, logs.Errorf("failed to get password: %v", err)
+		}
+		rab.Password = secret
 	}
-	rab.Password = password
 
 	// Details
 	if err := vh.GetSecrets(s.VaultDetails.DetailsPath); err != nil {
@@ -112,17 +121,21 @@ func (s *System) buildVault() (*Details, error) {
 		return nil, logs.Error("no mongo details found")
 	}
 
-	hostname, err := vh.GetSecret("mongo-hostname")
-	if err != nil {
-		return nil, logs.Errorf("failed to get hostname: %v", err)
+	if rab.Host == "" {
+		secret, err := vh.GetSecret("mongo-hostname")
+		if err != nil {
+			return nil, logs.Errorf("failed to get hostname: %v", err)
+		}
+		rab.Host = secret
 	}
-	rab.Host = hostname
 
-	database, err := vh.GetSecret("mongo-db")
-	if err != nil {
-		return nil, logs.Errorf("failed to get database: %v", err)
+	if rab.Database == "" {
+		secret, err := vh.GetSecret("mongo-db")
+		if err != nil {
+			return nil, logs.Errorf("failed to get database: %v", err)
+		}
+		rab.Database = secret
 	}
-	rab.Database = database
 
 	preCollections, err := vh.GetSecret("mongo-collections")
 	if err != nil {
