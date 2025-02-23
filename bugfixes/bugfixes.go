@@ -37,11 +37,16 @@ func (s *System) Setup(vd vaultHelper.VaultDetails, vh vaultHelper.VaultHelper) 
 }
 
 func (s *System) Build() (*Details, error) {
+	gen, err := s.buildGeneric()
+	if err != nil {
+		return nil, err
+	}
+
 	if s.VaultHelper != nil {
 		return s.buildVault()
 	}
 
-	return s.buildGeneric()
+	return gen, nil
 }
 
 func (s *System) buildGeneric() (*Details, error) {
@@ -70,27 +75,34 @@ func (s *System) buildVault() (*Details, error) {
 		return bf, logs.Error("no bugfixes secrets found")
 	}
 
-	agent, err := vh.GetSecret("bugfixes-agentid")
-	if err != nil {
-		return bf, logs.Errorf("failed to get agentid: %v", err)
-	}
-	bf.AgentKey = agent
-
-	secret, err := vh.GetSecret("bugfixes-secret")
-	if err != nil {
-		return bf, logs.Errorf("failed to get secret: %v", err)
-	}
-	bf.AgentSecret = secret
-
-	server, err := vh.GetSecret("bugfixes-server")
-	if err != nil {
-		if err.Error() != fmt.Sprint("key: 'bugfixes-server' not found") {
-			return bf, logs.Errorf("failed to get server: %v", err)
+	if bf.AgentKey == "" {
+		secret, err := vh.GetSecret("bugfixes-agentid")
+		if err != nil {
+			return bf, logs.Errorf("failed to get agentid: %v", err)
 		}
-		server = "https://api.bugfix.es/v1"
+		bf.AgentKey = secret
 	}
-	bf.Server = server
-	if !strings.HasPrefix(server, "http") {
+
+	if bf.AgentSecret == "" {
+		secret, err := vh.GetSecret("bugfixes-secret")
+		if err != nil {
+			return bf, logs.Errorf("failed to get secret: %v", err)
+		}
+		bf.AgentSecret = secret
+	}
+
+	if bf.Server == "" {
+		secret, err := vh.GetSecret("bugfixes-server")
+		if err != nil {
+			if err.Error() != fmt.Sprint("key: 'bugfixes-server' not found") {
+				return bf, logs.Errorf("failed to get server: %v", err)
+			}
+			secret = "https://api.bugfix.es/v1"
+		}
+		bf.Server = secret
+	}
+
+	if !strings.HasPrefix(bf.Server, "http") {
 		return bf, logs.Error("needs the protocol for server")
 	}
 

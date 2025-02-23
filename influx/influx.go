@@ -41,11 +41,16 @@ func (s *System) Setup(vd VaultDetails, vh vaultHelper.VaultHelper) {
 }
 
 func (s *System) Build() (*Details, error) {
+	gen, err := s.buildGeneric()
+	if err != nil {
+		return nil, err
+	}
+
 	if s.VaultHelper != nil {
 		return s.buildVault()
 	}
 
-	return s.buildGeneric()
+	return gen, nil
 }
 
 func (s *System) buildGeneric() (*Details, error) {
@@ -70,32 +75,40 @@ func (s *System) buildVault() (*Details, error) {
 		return in, logs.Error("no influx cred serets found")
 	}
 
-	token, err := vh.GetSecret("influx-token")
-	if err != nil {
-		return in, logs.Errorf("failed to get token: %v", err)
-	}
-	in.Token = token
-
-	bucket, err := vh.GetSecret("influx-bucket")
-	if err != nil {
-		return in, logs.Errorf("failed to get bucket: %v", err)
-	}
-	in.Bucket = bucket
-
-	org, err := vh.GetSecret("influx-org")
-	if err != nil {
-		return in, logs.Errorf("failed to get org: %v", err)
-	}
-	in.Org = org
-
-	host, err := vh.GetSecret("influx-hostname")
-	if err != nil {
-		if err.Error() != fmt.Sprint("key: 'influx-hostname' not found") {
-			return in, logs.Errorf("failed to get host: %v", err)
+	if in.Token == "" {
+		secret, err := vh.GetSecret("influx-token")
+		if err != nil {
+			return in, logs.Errorf("failed to get token: %v", err)
 		}
-		host = "http://db.chewed-k8s.net:8086"
+		in.Token = secret
 	}
-	in.Host = host
+
+	if in.Bucket == "" {
+		secret, err := vh.GetSecret("influx-bucket")
+		if err != nil {
+			return in, logs.Errorf("failed to get bucket: %v", err)
+		}
+		in.Bucket = secret
+	}
+
+	if in.Org == "" {
+		secret, err := vh.GetSecret("influx-org")
+		if err != nil {
+			return in, logs.Errorf("failed to get org: %v", err)
+		}
+		in.Org = secret
+	}
+
+	if in.Host == "" {
+		secret, err := vh.GetSecret("influx-hostname")
+		if err != nil {
+			if err.Error() != fmt.Sprint("key: 'influx-hostname' not found") {
+				return in, logs.Errorf("failed to get host: %v", err)
+			}
+			secret = "http://db.chewed-k8s.net:8086"
+		}
+		in.Host = secret
+	}
 
 	s.Details = *in
 	return in, nil

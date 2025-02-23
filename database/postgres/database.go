@@ -48,11 +48,16 @@ func (s *System) Setup(vd VaultDetails, vh vaultHelper.VaultHelper) {
 }
 
 func (s *System) Build() (*Details, error) {
+	gen, err := s.buildGeneric()
+	if err != nil {
+		return nil, err
+	}
+
 	if s.VaultHelper != nil {
 		return s.buildVault()
 	}
 
-	return s.buildGeneric()
+	return gen, nil
 }
 
 func (s *System) buildGeneric() (*Details, error) {
@@ -78,17 +83,21 @@ func (s *System) buildVault() (*Details, error) {
 		return rds, logs.Error("no rds cred serets found")
 	}
 
-	username, err := vh.GetSecret("username")
-	if err != nil {
-		return rds, logs.Errorf("failed to get username: %v", err)
+	if rds.User == "" {
+		secret, err := vh.GetSecret("username")
+		if err != nil {
+			return nil, logs.Errorf("failed to get username: %v", err)
+		}
+		rds.User = secret
 	}
-	rds.User = username
 
-	password, err := vh.GetSecret("password")
-	if err != nil {
-		return rds, logs.Errorf("failed to get password: %v", err)
+	if rds.Password == "" {
+		secret, err := vh.GetSecret("password")
+		if err != nil {
+			return nil, logs.Errorf("failed to get password: %v", err)
+		}
+		rds.Password = secret
 	}
-	rds.Password = password
 
 	// Get Details
 	if err := vh.GetSecrets(s.VaultDetails.DetailsPath); err != nil {
@@ -98,35 +107,41 @@ func (s *System) buildVault() (*Details, error) {
 		return rds, logs.Error("no rds detail secrets found")
 	}
 
-	port, err := vh.GetSecret("rds-port")
-	if err != nil {
-		if err.Error() != fmt.Sprint("key: 'rds-port' not found") {
-			return rds, logs.Errorf("failed to get port: %v", err)
-		}
-		port = "5432"
-	}
-	if port != "" {
-		iport, err := strconv.Atoi(port)
+	if rds.Port == 0 {
+		secret, err := vh.GetSecret("rds-port")
 		if err != nil {
-			return rds, logs.Errorf("failed to parse port: %v", err)
+			if err.Error() != fmt.Sprint("key: 'rds-port' not found") {
+				return nil, logs.Errorf("failed to get port: %v", err)
+			}
+			secret = "5432"
 		}
-		rds.Port = iport
+		if secret != "" {
+			iport, err := strconv.Atoi(secret)
+			if err != nil {
+				return nil, logs.Errorf("failed to parse port: %v", err)
+			}
+			rds.Port = iport
+		}
 	}
 
-	db, err := vh.GetSecret("rds-db")
-	if err != nil {
-		return rds, logs.Errorf("failed to get db: %v", err)
-	}
-	rds.DBName = db
-
-	host, err := vh.GetSecret("rds-hostname")
-	if err != nil {
-		if err.Error() != fmt.Sprint("key: 'rds-hostname' not found") {
-			return rds, logs.Errorf("failed to get host: %v", err)
+	if rds.DBName == "" {
+		secret, err := vh.GetSecret("rds-db")
+		if err != nil {
+			return nil, logs.Errorf("failed to get db: %v", err)
 		}
-		host = "db.chewed-k8s.net"
+		rds.DBName = secret
 	}
-	rds.Host = host
+
+	if rds.Host == "" {
+		secret, err := vh.GetSecret("rds-hostname")
+		if err != nil {
+			if err.Error() != fmt.Sprint("key: 'rds-hostname' not found") {
+				return nil, logs.Errorf("failed to get host: %v", err)
+			}
+			secret = "db.chewed-k8s.net"
+		}
+		rds.Host = secret
+	}
 
 	s.ExpireTime = time.Now().Add(time.Duration(vh.LeaseDuration()) * time.Second)
 	s.Details = *rds

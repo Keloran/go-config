@@ -47,11 +47,16 @@ func (s *System) Setup(vd VaultDetails, vh vaultHelper.VaultHelper) {
 }
 
 func (s *System) Build() (*Details, error) {
+	gen, err := s.buildGeneric()
+	if err != nil {
+		return nil, err
+	}
+
 	if s.VaultHelper != nil {
 		return s.buildVault()
 	}
 
-	return s.buildGeneric()
+	return gen, nil
 }
 
 func (s *System) buildVault() (*Details, error) {
@@ -65,32 +70,40 @@ func (s *System) buildVault() (*Details, error) {
 		return key, logs.Error("no keycloak secrets found")
 	}
 
-	clientId, err := vh.GetSecret("keycloak-client")
-	if err != nil {
-		return key, logs.Errorf("failed to get clientid: %v", err)
-	}
-	key.Client = clientId
-
-	secret, err := vh.GetSecret("keycloak-secret")
-	if err != nil {
-		return key, logs.Errorf("failed to get secret: %v", err)
-	}
-	key.Secret = secret
-
-	realm, err := vh.GetSecret("keycloak-realm")
-	if err != nil {
-		return key, logs.Errorf("failed to get realm: %v", err)
-	}
-	key.Realm = realm
-
-	host, err := vh.GetSecret("keycloak-host")
-	if err != nil {
-		if err.Error() != fmt.Sprint("key: 'keycloak-host' not found") {
-			return key, logs.Errorf("failed to get host: %v", err)
+	if key.Client == "" {
+		secret, err := vh.GetSecret("keycloak-client")
+		if err != nil {
+			return key, logs.Errorf("failed to get clientid: %v", err)
 		}
-		host = "https://keys.chewedfeed.com"
+		key.Client = secret
 	}
-	key.Host = host
+
+	if key.Secret == "" {
+		secret, err := vh.GetSecret("keycloak-secret")
+		if err != nil {
+			return key, logs.Errorf("failed to get secret: %v", err)
+		}
+		key.Secret = secret
+	}
+
+	if key.Realm == "" {
+		secret, err := vh.GetSecret("keycloak-realm")
+		if err != nil {
+			return key, logs.Errorf("failed to get realm: %v", err)
+		}
+		key.Realm = secret
+	}
+
+	if key.Host == "" {
+		secret, err := vh.GetSecret("keycloak-host")
+		if err != nil {
+			if err.Error() != fmt.Sprint("key: 'keycloak-host' not found") {
+				return key, logs.Errorf("failed to get host: %v", err)
+			}
+			secret = "https://keys.chewedfeed.com"
+		}
+		key.Host = secret
+	}
 
 	s.Details = *key
 	return key, nil
