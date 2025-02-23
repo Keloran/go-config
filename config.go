@@ -1,6 +1,8 @@
 package ConfigBuilder
 
 import (
+	"github.com/keloran/go-config/auth/clerk"
+	"github.com/keloran/go-config/notify/resend"
 	"net/http"
 
 	"github.com/bugfixes/go-bugfixes/logs"
@@ -29,6 +31,8 @@ type Config struct {
 	Rabbit   rabbit.System
 	Influx   influx.System
 	Bugfixes bugfixes.System
+	Clerk    clerk.System
+	Resend   resend.System
 
 	// Project level properties
 	ProjectProperties map[string]interface{}
@@ -184,6 +188,47 @@ func Influx(cfg *Config) error {
 
 	cfg.Influx = *i
 
+	return nil
+}
+
+func Clerk(cfg *Config) error {
+	c := clerk.NewSystem()
+	if cfg.VaultHelper != nil {
+		vd := c.VaultDetails
+		if cfg.VaultPaths != (vault.Paths{}) {
+			if cfg.VaultPaths.Clerk.Details != "" {
+				vd.DetailsPath = cfg.VaultPaths.Clerk.Details
+			}
+		}
+
+		c.Setup(vd, *cfg.VaultHelper)
+	}
+	_, err := c.Build()
+	if err != nil {
+		return logs.Errorf("failed to build clerk: %v", err)
+	}
+	cfg.Clerk = *c
+	return nil
+}
+
+func Resend(cfg *Config) error {
+	r := resend.NewSystem()
+	if cfg.VaultHelper != nil {
+		vd := r.VaultDetails
+		if cfg.VaultPaths != (vault.Paths{}) {
+			if cfg.VaultPaths.Resend.Details != "" {
+				vd.DetailsPath = cfg.VaultPaths.Resend.Details
+			}
+		}
+
+		r.Setup(vd, *cfg.VaultHelper)
+	}
+
+	_, err := r.Build()
+	if err != nil {
+		return logs.Errorf("failed to build resend: %v", err)
+	}
+	cfg.Resend = *r
 	return nil
 }
 

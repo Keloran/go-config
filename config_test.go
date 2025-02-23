@@ -252,6 +252,52 @@ func TestBugfixes(t *testing.T) {
 	assert.Equal(t, "testSecret", cfg.Bugfixes.Logger.Secret)
 }
 
+func TestClerk(t *testing.T) {
+	t.Run("clerk no set values", func(t *testing.T) {
+		os.Clearenv()
+
+		cfg, err := BuildLocal(Clerk)
+		assert.NoError(t, err)
+		assert.Equal(t, "", cfg.Clerk.PublicKey)
+	})
+	t.Run("clerk with values", func(t *testing.T) {
+		mockVault := &MockVaultHelper{
+			KVSecrets: []vaulthelper.KVSecret{
+				{Key: "clerk_key", Value: "testKey"},
+				{Key: "clerk_public_key", Value: "testPublicKey"},
+			},
+		}
+
+		os.Clearenv()
+		cfg, err := BuildLocalVH(mockVault, Clerk)
+		assert.NoError(t, err)
+		assert.Equal(t, "testPublicKey", cfg.Clerk.PublicKey)
+		assert.Equal(t, "testKey", cfg.Clerk.Key)
+	})
+}
+
+func TestResend(t *testing.T) {
+	t.Run("resend no set values", func(t *testing.T) {
+		os.Clearenv()
+
+		cfg, err := BuildLocal(Resend)
+		assert.NoError(t, err)
+		assert.Equal(t, "", cfg.Resend.Key)
+	})
+	t.Run("resend with values", func(t *testing.T) {
+		mockVault := &MockVaultHelper{
+			KVSecrets: []vaulthelper.KVSecret{
+				{Key: "resend_key", Value: "testKey"},
+			},
+		}
+
+		os.Clearenv()
+		cfg, err := BuildLocalVH(mockVault, Resend)
+		assert.NoError(t, err)
+		assert.Equal(t, "testKey", cfg.Resend.Key)
+	})
+}
+
 // Assuming ProjectConfigurator interface and Config structure are defined as shown previously
 
 // MockProjectConfigurator is a mock implementation for testing purposes.
