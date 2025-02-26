@@ -173,7 +173,7 @@ func (s *System) GetPGXClient(ctx context.Context) (*pgx.Conn, error) {
 		}
 	}
 
-	client, err := pgx.Connect(ctx, fmt.Sprintf("postgres://%s:%s@%s:%d/%s", s.User, s.Password, s.Host, s.Port, s.DBName))
+	client, err := pgx.Connect(ctx, fmt.Sprintf("postgres://%s:%s@%s:%d/%s", s.Details.User, s.Details.Password, s.Details.Host, s.Details.Port, s.Details.DBName))
 	if err != nil {
 		return nil, logs.Errorf("failed to get db client: %v", err)
 	}
