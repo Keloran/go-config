@@ -1,30 +1,29 @@
-package postgres
+package mysql
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
-	"github.com/jackc/pgx/v5"
-	"strconv"
-	"time"
-
 	"github.com/bugfixes/go-bugfixes/logs"
 	"github.com/caarlos0/env/v8"
 	vaultHelper "github.com/keloran/vault-helper"
+	"strconv"
+	"time"
 )
 
 type VaultDetails struct {
-	CredPath    string `env:"RDS_VAULT_CRED_PATH" envDefault:"secret/data/chewedfeed/postgres"`
+	CredPath    string `env:"RDS_VAULT_CRED_PATH" envDefault:"secret/data/chewedfeed/mysql"`
 	DetailsPath string `env:"RDS_VAULT_DETAIL_PATH" envDefault:"secret/data/chewedfeed/details"`
 
 	ExpireTime time.Time
 }
 
 type Details struct {
-	Host     string `env:"RDS_HOSTNAME" envDefault:"postgres.chewedfeed"`
-	Port     int    `env:"RDS_PORT" envDefault:"5432"`
+	Host     string `env:"RDS_HOSTNAME" envDefault:"mysql.chewedfeed"`
+	Port     int    `env:"RDS_PORT" envDefault:"3306"`
 	User     string `env:"RDS_USERNAME"`
 	Password string `env:"RDS_PASSWORD"`
-	DBName   string `env:"RDS_DB" envDefault:"postgres"`
+	DBName   string `env:"RDS_DB" envDefault:"chewedfeed"`
 }
 
 type System struct {
@@ -118,7 +117,7 @@ func (s *System) buildVault() (*Details, error) {
 			if err.Error() != fmt.Sprint("key: 'rds-port' not found") {
 				return nil, logs.Errorf("failed to get port: %v", err)
 			}
-			secret = "5432"
+			secret = "3306"
 		}
 		if secret != "" {
 			iport, err := strconv.Atoi(secret)
@@ -165,26 +164,27 @@ func (s *System) buildVault() (*Details, error) {
 	return rds, nil
 }
 
-func (s *System) GetPGXClient(ctx context.Context) (*pgx.Conn, error) {
+func (s *System) GetMySQLClient(ctx context.Context) (*sql.DB, error) {
 	if s.VaultHelper != nil && time.Now().Unix() > s.VaultDetails.ExpireTime.Unix() {
-		logs.Infof("vault expired, rebuilding, new expire time is %v", s.VaultDetails.ExpireTime)
-
-		if _, err := s.buildVault(); err != nil {
+		_, err := s.buildVault()
+		if err != nil {
 			return nil, logs.Errorf("failed to build vault: %v", err)
 		}
 	}
-	logs.Infof("vault expire time is %v, time now is %v", s.VaultDetails.ExpireTime, time.Now())
 
-	client, err := pgx.Connect(ctx, fmt.Sprintf("postgres://%s:%s@%s:%d/%s", s.Details.User, s.Details.Password, s.Details.Host, s.Details.Port, s.Details.DBName))
+	client, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", s.Details.User, s.Details.Password, s.Details.Host, s.Details.Port, s.Details.DBName))
 	if err != nil {
 		return nil, logs.Errorf("failed to get db client: %v", err)
 	}
+	client.SetConnMaxLifetime(s.ExpireTime.Sub(time.Now()))
+	client.SetMaxIdleConns(10)
+	client.SetMaxOpenConns(10)
 
 	return client, nil
 }
 
-func (s *System) ClosePGX(ctx context.Context, conn pgx.Conn) error {
-	if err := conn.Close(ctx); err != nil {
+func (s *System) CloseMySQLClient(ctx context.Context, conn *sql.DB) error {
+	if err := conn.Close(); err != nil {
 		return logs.Errorf("failed to close db client: %v", err)
 	}
 
