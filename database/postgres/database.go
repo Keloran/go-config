@@ -166,14 +166,13 @@ func (s *System) buildVault() (*Details, error) {
 }
 
 func (s *System) GetPGXClient(ctx context.Context) (*pgx.Conn, error) {
-	if s.VaultHelper != nil && time.Now().Unix() > s.VaultDetails.ExpireTime.Unix() {
+	if s.VaultHelper != nil && time.Now().Unix() > (s.VaultDetails.ExpireTime.Unix()-3600) {
 		logs.Infof("vault expired, rebuilding, new expire time is %v", s.VaultDetails.ExpireTime)
 
 		if _, err := s.buildVault(); err != nil {
 			return nil, logs.Errorf("failed to build vault: %v", err)
 		}
 	}
-	logs.Infof("vault expire time is %v, time now is %v", s.VaultDetails.ExpireTime, time.Now())
 
 	client, err := pgx.Connect(ctx, fmt.Sprintf("postgres://%s:%s@%s:%d/%s", s.Details.User, s.Details.Password, s.Details.Host, s.Details.Port, s.Details.DBName))
 	if err != nil {
