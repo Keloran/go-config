@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/jackc/pgx/v5"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/bugfixes/go-bugfixes/logs"
@@ -176,6 +177,9 @@ func (s *System) GetPGXClient(ctx context.Context) (*pgx.Conn, error) {
 
 	client, err := pgx.Connect(ctx, fmt.Sprintf("postgres://%s:%s@%s:%d/%s", s.Details.User, s.Details.Password, s.Details.Host, s.Details.Port, s.Details.DBName))
 	if err != nil {
+		if strings.Contains(err.Error(), "operation was canceled") {
+			return nil, err
+		}
 		return nil, logs.Errorf("failed to get db client: %v", err)
 	}
 

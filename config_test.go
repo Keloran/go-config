@@ -263,8 +263,8 @@ func TestClerk(t *testing.T) {
 	t.Run("clerk with values", func(t *testing.T) {
 		mockVault := &MockVaultHelper{
 			KVSecrets: []vaulthelper.KVSecret{
-				{Key: "clerk_key", Value: "testKey"},
-				{Key: "clerk_public_key", Value: "testPublicKey"},
+				{Key: "clerk-key", Value: "testKey"},
+				{Key: "clerk-public-key", Value: "testPublicKey"},
 			},
 		}
 
