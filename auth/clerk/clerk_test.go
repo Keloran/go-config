@@ -27,8 +27,8 @@ func TestBuildGeneric(t *testing.T) {
 func TestBuildVault(t *testing.T) {
 	mockVault := &vaultHelper.MockVaultHelper{
 		KVSecrets: []vaultHelper.KVSecret{
-			{Key: "clerk_key", Value: "testKey"},
-			{Key: "clerk_public_key", Value: "testPublicKey"},
+			{Key: "clerk-key", Value: "testKey"},
+			{Key: "clerk-public-key", Value: "testPublicKey"},
 		},
 	}
 
@@ -46,8 +46,8 @@ func TestBuildVault(t *testing.T) {
 func TestBuildVaultNoKey(t *testing.T) {
 	mockVault := &vaultHelper.MockVaultHelper{
 		KVSecrets: []vaultHelper.KVSecret{
-			{Key: "clerk_key", Value: "testKey"},
-			{Key: "clerk_public_key", Value: "testPublicKey"},
+			{Key: "clerk-key", Value: "testKey"},
+			{Key: "clerk-public-key", Value: "testPublicKey"},
 		},
 	}
 
@@ -66,7 +66,7 @@ func TestBuildVaultNoPublicKey(t *testing.T) {
 	os.Clearenv()
 	mockVault := &vaultHelper.MockVaultHelper{
 		KVSecrets: []vaultHelper.KVSecret{
-			{Key: "clerk_key", Value: "testKey"},
+			{Key: "clerk-key", Value: "testKey"},
 		},
 	}
 
