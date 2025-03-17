@@ -5,15 +5,11 @@ import (
 	"fmt"
 	"github.com/Nerzal/gocloak/v13"
 	vaultHelper "github.com/keloran/vault-helper"
-	"github.com/stretchr/testify/require"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/wait"
-	"os"
-	"testing"
-	"time"
-
 	key "github.com/stillya/testcontainers-keycloak"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"os"
+	"testing"
 )
 
 const (
@@ -75,13 +71,11 @@ func TestBuildGeneric(t *testing.T) {
 }
 
 func setupKeycloak(ctx context.Context) (*key.KeycloakContainer, error) {
-	kc, err := key.Run(ctx,
-		fmt.Sprintf("keycloak/keycloak:%s", keycloakVersion),
-
-		testcontainers.WithWaitStrategy(
-			wait.ForListeningPort("8080/tcp"),
-			wait.ForLog("[org.keycloak.quarkus.runtime.KeycloakMain] (main) Running the server in development mode. DO NOT use this configuration in production.").WithStartupTimeout(1*time.Minute),
-		),
+	kc, err := key.Run(ctx, fmt.Sprintf("keycloak/keycloak:%s", keycloakVersion),
+		//testcontainers.WithWaitStrategy(
+		//	wait.ForListeningPort("8080/tcp"),
+		//	wait.ForLog("[org.keycloak.quarkus.runtime.KeycloakMain] (main) Running the server in development mode. DO NOT use this configuration in production.").WithStartupTimeout(5*time.Minute),
+		//),
 		key.WithContextPath("/auth"),
 		key.WithAdminUsername(adminUser),
 		key.WithAdminPassword(adminPassword),
