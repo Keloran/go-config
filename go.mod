@@ -8,7 +8,7 @@ require (
 	github.com/Nerzal/gocloak/v13 v13.9.0
 	github.com/bugfixes/go-bugfixes v0.13.0
 	github.com/caarlos0/env/v8 v8.0.0
-	github.com/jackc/pgx/v5 v5.7.2
+	github.com/jackc/pgx/v5 v5.7.3
 	github.com/keloran/vault-helper v1.1.0
 	github.com/stillya/testcontainers-keycloak v0.3.2
 	github.com/stretchr/testify v1.10.0
