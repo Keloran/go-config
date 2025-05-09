@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -22,16 +23,17 @@ type VaultDetails struct {
 }
 
 type Details struct {
-	Host     string `env:"RDS_HOSTNAME" envDefault:"postgres.chewedfeed"`
-	Port     int    `env:"RDS_PORT" envDefault:"5432"`
-	User     string `env:"RDS_USERNAME"`
-	Password string `env:"RDS_PASSWORD"`
-	DBName   string `env:"RDS_DB" envDefault:"postgres"`
+	Host              string        `env:"RDS_HOSTNAME" envDefault:"postgres.chewedfeed"`
+	Port              int           `env:"RDS_PORT" envDefault:"5432"`
+	User              string        `env:"RDS_USERNAME"`
+	Password          string        `env:"RDS_PASSWORD"`
+	DBName            string        `env:"RDS_DB" envDefault:"postgres"`
+	ConnectionTimeout time.Duration `env:"RDS_CONNECTION_TIMEOUT" envDefault:"10s"`
+	ExtraParams       string
 }
 
 type System struct {
-	Context           context.Context
-	ConnectionTimeout time.Duration `env:"RDS_CONNECTION_TIMEOUT" envDefault:"10s"`
+	Context context.Context
 
 	Details
 
@@ -179,11 +181,11 @@ func (s *System) GetPGXClient(ctx context.Context) (*pgx.Conn, error) {
 		}
 	}
 
-	timeoutContext, cancel := context.WithTimeout(ctx, s.ConnectionTimeout)
+	timeoutContext, cancel := context.WithTimeout(ctx, s.Details.ConnectionTimeout)
 	s.Context = timeoutContext
 	defer cancel()
 
-	client, err := pgx.Connect(timeoutContext, fmt.Sprintf("postgres://%s:%s@%s:%d/%s", s.Details.User, s.Details.Password, s.Details.Host, s.Details.Port, s.Details.DBName))
+	client, err := pgx.Connect(timeoutContext, fmt.Sprintf("postgres://%s:%s@%s:%d/%s?%s", s.Details.User, s.Details.Password, s.Details.Host, s.Details.Port, s.Details.DBName, s.Details.ExtraParams))
 	if err != nil {
 		if strings.Contains(err.Error(), "operation was canceled") {
 			return nil, err
@@ -203,11 +205,11 @@ func (s *System) GetPGXPoolClient(ctx context.Context) (*pgxpool.Pool, error) {
 		}
 	}
 
-	timeoutContext, cancel := context.WithTimeout(ctx, s.ConnectionTimeout)
+	timeoutContext, cancel := context.WithTimeout(ctx, s.Details.ConnectionTimeout)
 	s.Context = timeoutContext
 	defer cancel()
 
-	config, err := pgxpool.ParseConfig(fmt.Sprintf("postgres://%s:%s@%s:%d/%s", s.Details.User, s.Details.Password, s.Details.Host, s.Details.Port, s.Details.DBName))
+	config, err := pgxpool.ParseConfig(fmt.Sprintf("postgres://%s:%s@%s:%d/%s?%s", s.Details.User, s.Details.Password, s.Details.Host, s.Details.Port, s.Details.DBName, s.Details.ExtraParams))
 	if err != nil {
 		if strings.Contains(err.Error(), "operation was canceled") {
 			return nil, err
@@ -215,7 +217,7 @@ func (s *System) GetPGXPoolClient(ctx context.Context) (*pgxpool.Pool, error) {
 		return nil, logs.Errorf("failed to get db client: %v", err)
 	}
 	config.MaxConns = 10
-	config.MaxConnIdleTime = s.ConnectionTimeout
+	config.MaxConnIdleTime = s.Details.ConnectionTimeout
 
 	client, err := pgxpool.NewWithConfig(timeoutContext, config)
 	if err != nil {
@@ -232,5 +234,39 @@ func (s *System) ClosePGX(ctx context.Context, conn *pgx.Conn) error {
 	if err := conn.Close(ctx); err != nil {
 		return logs.Errorf("failed to close db client: %v", err)
 	}
+	return nil
+}
+
+func (s *System) ParseConnectionString(connStr string) error {
+	str, err := url.Parse(connStr)
+	if err != nil {
+		return logs.Errorf("failed to parse connection string: %v", err)
+	}
+	if str.Scheme != "postgres" {
+		return logs.Errorf("invalid connection string scheme: %s", str.Scheme)
+	}
+
+	s.Details.Host = str.Hostname()
+	if port, err := strconv.Atoi(str.Port()); err == nil {
+		s.Details.Port = port
+	} else {
+		return logs.Errorf("invalid connection string port: %s", str.Port())
+	}
+
+	s.Details.User = str.User.Username()
+	if pword, ok := str.User.Password(); ok {
+		s.Details.Password = pword
+	} else {
+		return logs.Error("no password found in connection string")
+	}
+
+	if parts := strings.Split(str.Path, "/"); len(parts) > 1 {
+		s.Details.DBName = parts[1]
+	}
+
+	if len(str.Query()) > 0 {
+		s.Details.ExtraParams = str.RawQuery
+	}
+
 	return nil
 }

@@ -27,7 +27,12 @@ func (r *RealMongoOperations) GetMongoClient(ctx context.Context, m System) (*mo
 		m = *mr
 	}
 
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(fmt.Sprintf("mongodb://%s:%s@%s", m.Username, m.Password, m.Host)))
+	url := fmt.Sprintf("mongodb://%s:%s@%s", m.Username, m.Password, m.Host)
+	if m.RawURL != "" {
+		url = m.RawURL
+	}
+
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(url))
 	if err != nil {
 		return nil, logs.Errorf("error connecting to mongo: %v", err)
 	}

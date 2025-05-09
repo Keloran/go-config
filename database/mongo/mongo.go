@@ -26,6 +26,7 @@ type Details struct {
 	Username string `env:"MONGO_USER" envDefault:""`
 	Password string `env:"MONGO_PASS" envDefault:""`
 	Database string `env:"MONGO_DB" envDefault:""`
+	RawURL   string `env:"MONGO_URL" envDefault:"mongodb://localhost:27017"`
 
 	Collections map[string]string
 	Collection  string
