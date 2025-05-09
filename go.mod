@@ -1,8 +1,8 @@
 module github.com/keloran/go-config
 
-go 1.22
+go 1.23
 
-toolchain go1.22.2
+toolchain go1.24.1
 
 require (
 	github.com/Nerzal/gocloak/v13 v13.9.0
@@ -16,7 +16,7 @@ require (
 	github.com/testcontainers/testcontainers-go/modules/mongodb v0.35.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.35.0
 	go.mongodb.org/mongo-driver v1.17.3
-	go.uber.org/mock v0.5.1
+	go.uber.org/mock v0.5.2
 )
 
 require (
