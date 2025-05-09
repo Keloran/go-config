@@ -128,7 +128,7 @@ func (s *System) buildVault() (*Details, error) {
 	}
 
 	// get the port based on the username, since port has a default in env
-	if s.Details.User == "" {
+	if s.Details.User == "" && s.Details.Port == 5432 {
 		secret, err := vh.GetSecret("rds-port")
 		if err := vaultSecretError("rds-port", err); err != nil {
 			secret = "5432"

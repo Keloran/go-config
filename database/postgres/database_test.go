@@ -163,6 +163,7 @@ func TestPostgresConnection(t *testing.T) {
 		t.Fatal(err)
 	}
 	sys.Details.ConnectionTimeout = time.Second * 30
+	time.Sleep(sys.Details.ConnectionTimeout)
 
 	conn, err := sys.GetPGXClient(ctx)
 	assert.NoError(t, err)
