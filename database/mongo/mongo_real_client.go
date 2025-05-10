@@ -42,18 +42,18 @@ func (r *RealMongoOperations) GetMongoClient(m System) (*mongo.Client, error) {
 	return client, nil
 }
 
-func (r *RealMongoOperations) GetMongoDatabase(m System) (*mongo.Database, error) {
+func (r *RealMongoOperations) GetMongoDatabase(m System) (string, error) {
 	if m.VaultHelper != nil && time.Now().Unix() > m.VaultDetails.ExpireTime.Unix() {
 		mr := NewSystem()
 		mr.Setup(m.VaultDetails, *mr.VaultHelper)
 		_, err := mr.Build()
 		if err != nil {
-			return nil, logs.Errorf("error re-building mongo: %v", err)
+			return "", logs.Errorf("error re-building mongo: %v", err)
 		}
 		m = *mr
 	}
 
-	return r.Database, nil
+	return m.Details.Database, nil
 }
 
 func (r *RealMongoOperations) GetMongoCollection(m System, collection string) (*mongo.Collection, error) {
@@ -67,7 +67,7 @@ func (r *RealMongoOperations) GetMongoCollection(m System, collection string) (*
 		m = *mr
 	}
 
-	r.Collection = r.Client.Database(m.Database).Collection(m.Collections[collection])
+	r.Collection = r.Client.Database(m.Details.Database).Collection(m.Details.Collections[collection])
 	return r.Collection, nil
 }
 
