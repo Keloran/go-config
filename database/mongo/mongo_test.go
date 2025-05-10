@@ -116,7 +116,7 @@ func TestMockMungoClient_Connect(t *testing.T) {
 	assert.NoError(t, err)
 
 	mu := RealMongoOperations{}
-	conn, err := mu.GetMongoClient(ctx, *mo)
+	conn, err := mu.GetMongoClient(*mo)
 	assert.NoError(t, err)
 	defer func() {
 		if conn != nil {
