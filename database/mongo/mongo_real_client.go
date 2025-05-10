@@ -6,8 +6,9 @@ import (
 	"time"
 
 	"github.com/bugfixes/go-bugfixes/logs"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
 )
 
 type RealMongoOperations struct {
@@ -16,7 +17,7 @@ type RealMongoOperations struct {
 	Database   *mongo.Database
 }
 
-func (r *RealMongoOperations) GetMongoClient(ctx context.Context, m System) (*mongo.Client, error) {
+func (r *RealMongoOperations) GetMongoClient(m System) (*mongo.Client, error) {
 	if m.VaultHelper != nil && time.Now().Unix() > m.VaultDetails.ExpireTime.Unix() {
 		mr := NewSystem()
 		mr.Setup(m.VaultDetails, *mr.VaultHelper)
@@ -32,7 +33,7 @@ func (r *RealMongoOperations) GetMongoClient(ctx context.Context, m System) (*mo
 		url = m.RawURL
 	}
 
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(url))
+	client, err := mongo.Connect(options.Client().ApplyURI(url).SetServerAPIOptions(options.ServerAPI(options.ServerAPIVersion1)), options.Client().SetReadPreference(readpref.SecondaryPreferred()))
 	if err != nil {
 		return nil, logs.Errorf("error connecting to mongo: %v", err)
 	}
@@ -52,7 +53,6 @@ func (r *RealMongoOperations) GetMongoDatabase(m System) (*mongo.Database, error
 		m = *mr
 	}
 
-	r.Database = r.Client.Database(m.Database)
 	return r.Database, nil
 }
 
