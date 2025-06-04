@@ -252,7 +252,7 @@ func (s *System) ParseConnectionString(connStr string) error {
 	if err != nil {
 		return logs.Errorf("failed to parse connection string: %v", err)
 	}
-	if str.Scheme != "postgres" {
+	if str.Scheme != "postgres" && str.Scheme != "postgresql" {
 		return logs.Errorf("invalid connection string scheme: %s", str.Scheme)
 	}
 
