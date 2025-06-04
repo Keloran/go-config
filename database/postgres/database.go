@@ -28,6 +28,7 @@ type Details struct {
 	User              string        `env:"RDS_USERNAME"`
 	Password          string        `env:"RDS_PASSWORD"`
 	DBName            string        `env:"RDS_DB" envDefault:"postgres"`
+	RawURL            string        `env:"RDS_URL"`
 	ConnectionTimeout time.Duration `env:"RDS_CONNECTION_TIMEOUT" envDefault:"10s"`
 	ExtraParams       string
 }
@@ -72,6 +73,12 @@ func (s *System) buildGeneric() (*Details, error) {
 	}
 
 	s.Details = *rds
+
+	if rds.RawURL != "" {
+		if err := s.ParseConnectionString(rds.RawURL); err != nil {
+			return nil, err
+		}
+	}
 
 	return rds, nil
 }
