@@ -73,7 +73,12 @@ func Vault(cfg *Config) error {
 	return nil
 }
 
+// Database deprecated: use Postgres instead
 func Database(cfg *Config) error {
+	return Postgres(cfg)
+}
+
+func Postgres(cfg *Config) error {
 	d := postgres.NewSystem()
 	if cfg.VaultHelper != nil {
 		vd := postgres.VaultDetails{}
