@@ -17,7 +17,7 @@ type System struct {
 	EnvMap      map[string]string
 }
 
-func NewLocal(local, dev bool, http, grpc int) *System {
+func NewSystem(local, dev bool, http, grpc int) *System {
 	return &System{
 		KeepLocal:   local,
 		Development: dev,
@@ -27,7 +27,7 @@ func NewLocal(local, dev bool, http, grpc int) *System {
 }
 
 func Build() (*System, error) {
-	l := NewLocal(false, false, 80, 3000)
+	l := NewSystem(false, false, 80, 3000)
 	if err := env.Parse(l); err != nil {
 		return l, logs.Errorf("failed to parse local config: %v", err)
 	}

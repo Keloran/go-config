@@ -2,6 +2,7 @@ package ConfigBuilder
 
 import (
 	"github.com/keloran/go-config/auth/clerk"
+	"github.com/keloran/go-config/flags"
 	"github.com/keloran/go-config/notify/resend"
 	"net/http"
 
@@ -33,6 +34,7 @@ type Config struct {
 	Bugfixes bugfixes.System
 	Clerk    clerk.System
 	Resend   resend.System
+	Flags    flags.System
 
 	// Project level properties
 	ProjectProperties map[string]interface{}
@@ -260,6 +262,15 @@ func Bugfixes(cfg *Config) error {
 	b.Logger = bf
 
 	cfg.Bugfixes = *b
+	return nil
+}
+
+func Flags(cfg *Config) error {
+	f, err := flags.Build()
+	if err != nil {
+		return logs.Errorf("failed to build flags: %v", err)
+	}
+	cfg.Flags = *f
 	return nil
 }
 
