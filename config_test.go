@@ -252,6 +252,17 @@ func TestBugfixes(t *testing.T) {
 	assert.Equal(t, "testSecret", cfg.Bugfixes.Logger.Secret)
 }
 
+func TestFlags(t *testing.T) {
+	os.Clearenv()
+	if err := os.Setenv("FLAGS_AGENT_ID", "agentId"); err != nil {
+		assert.NoError(t, err)
+	}
+
+	cfg, err := Build(Flags)
+	assert.NoError(t, err)
+	assert.Equal(t, "agentId", cfg.Flags.AgentID)
+}
+
 func TestClerk(t *testing.T) {
 	t.Run("clerk no set values", func(t *testing.T) {
 		os.Clearenv()
