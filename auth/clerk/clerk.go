@@ -3,6 +3,7 @@ package clerk
 import (
 	"context"
 	"fmt"
+
 	"github.com/caarlos0/env/v8"
 	vaultHelper "github.com/keloran/vault-helper"
 )
@@ -10,6 +11,7 @@ import (
 type Details struct {
 	Key       string `env:"CLERK_SECRET_KEY" envDefault:""`
 	PublicKey string `env:"NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY" envDefault:""`
+	DevUser   string `env:"CLERK_DEV_USER" envDefault:""`
 }
 
 type System struct {
@@ -86,6 +88,18 @@ func (s *System) buildVault() (*Details, error) {
 		clerk.PublicKey = secret
 	} else {
 		clerk.PublicKey = s.Details.PublicKey
+	}
+
+	if s.Details.DevUser == "" {
+		secret, err := vh.GetSecret("clerk-dev-user")
+		if err != nil {
+			if err.Error() != fmt.Sprint("key: 'clerk-dev-user' not found") {
+				return clerk, err
+			}
+		}
+		clerk.DevUser = secret
+	} else {
+		clerk.DevUser = s.Details.DevUser
 	}
 
 	s.Details = *clerk
