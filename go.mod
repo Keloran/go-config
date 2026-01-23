@@ -6,7 +6,7 @@ toolchain go1.24.3
 
 require (
 	github.com/Nerzal/gocloak/v13 v13.9.0
-	github.com/bugfixes/go-bugfixes v0.14.0
+	github.com/bugfixes/go-bugfixes v0.14.1
 	github.com/caarlos0/env/v8 v8.0.0
 	github.com/jackc/pgx/v5 v5.8.0
 	github.com/keloran/vault-helper v1.1.0
@@ -38,7 +38,7 @@ require (
 	github.com/ebitengine/purego v0.8.4 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-jose/go-jose/v4 v4.1.1 // indirect
-	github.com/go-logfmt/logfmt v0.6.0 // indirect
+	github.com/go-logfmt/logfmt v0.6.1 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
