@@ -37,7 +37,7 @@ type Config struct {
 	Flags    flags.System
 
 	// Project level properties
-	ProjectProperties map[string]interface{}
+	ProjectProperties ProjectProperties
 }
 
 type BuildOption func(*Config) error
