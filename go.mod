@@ -6,7 +6,7 @@ toolchain go1.24.3
 
 require (
 	github.com/Nerzal/gocloak/v13 v13.9.0
-	github.com/bugfixes/go-bugfixes v0.14.1
+	github.com/bugfixes/go-bugfixes v0.14.2
 	github.com/caarlos0/env/v8 v8.0.0
 	github.com/jackc/pgx/v5 v5.8.0
 	github.com/keloran/vault-helper v1.1.0
