@@ -38,6 +38,7 @@ type Config struct {
 
 	// Project level properties
 	ProjectProperties ProjectProperties
+	ProjectConfig     interface{}
 }
 
 type BuildOption func(*Config) error

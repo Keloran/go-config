@@ -42,3 +42,15 @@ func (p ProjectProperties) Set(key string, value interface{}) {
 		p[key] = value
 	}
 }
+
+// GetProjectConfig retrieves the ProjectConfig as the specified type.
+// Returns the typed config and true if successful, nil and false otherwise.
+func GetProjectConfig[T any](cfg *Config) (*T, bool) {
+	if cfg == nil || cfg.ProjectConfig == nil {
+		return nil, false
+	}
+	if p, ok := cfg.ProjectConfig.(*T); ok {
+		return p, true
+	}
+	return nil, false
+}

@@ -350,3 +350,100 @@ func TestProjectBuild(t *testing.T) {
 		assert.Equal(t, true, cfg.ProjectProperties.GetValue("TestProperty"))
 	})
 }
+
+// TestProjectConfig struct for GetProjectConfig tests
+type TestAppConfig struct {
+	AppName     string
+	Port        int
+	Debug       bool
+	NestedFlags struct {
+		FeatureA bool
+		FeatureB string
+	}
+}
+
+// AnotherConfig is a different struct type for wrong type assertion tests
+type AnotherConfig struct {
+	SomeField string
+}
+
+func TestGetProjectConfig(t *testing.T) {
+	t.Run("happy path - retrieve struct successfully", func(t *testing.T) {
+		cfg := NewConfigNoVault()
+		expected := &TestAppConfig{
+			AppName: "test-app",
+			Port:    8080,
+			Debug:   true,
+		}
+		expected.NestedFlags.FeatureA = true
+		expected.NestedFlags.FeatureB = "enabled"
+
+		cfg.ProjectConfig = expected
+
+		result, ok := GetProjectConfig[TestAppConfig](cfg)
+		assert.True(t, ok)
+		assert.NotNil(t, result)
+		assert.Equal(t, "test-app", result.AppName)
+		assert.Equal(t, 8080, result.Port)
+		assert.Equal(t, true, result.Debug)
+		assert.Equal(t, true, result.NestedFlags.FeatureA)
+		assert.Equal(t, "enabled", result.NestedFlags.FeatureB)
+	})
+
+	t.Run("nil config", func(t *testing.T) {
+		result, ok := GetProjectConfig[TestAppConfig](nil)
+		assert.False(t, ok)
+		assert.Nil(t, result)
+	})
+
+	t.Run("nil ProjectConfig", func(t *testing.T) {
+		cfg := NewConfigNoVault()
+		cfg.ProjectConfig = nil
+
+		result, ok := GetProjectConfig[TestAppConfig](cfg)
+		assert.False(t, ok)
+		assert.Nil(t, result)
+	})
+
+	t.Run("wrong type assertion", func(t *testing.T) {
+		cfg := NewConfigNoVault()
+		cfg.ProjectConfig = &AnotherConfig{SomeField: "value"}
+
+		result, ok := GetProjectConfig[TestAppConfig](cfg)
+		assert.False(t, ok)
+		assert.Nil(t, result)
+	})
+
+	t.Run("non-pointer stored - returns false", func(t *testing.T) {
+		cfg := NewConfigNoVault()
+		// Store as value instead of pointer
+		cfg.ProjectConfig = TestAppConfig{AppName: "test"}
+
+		result, ok := GetProjectConfig[TestAppConfig](cfg)
+		assert.False(t, ok)
+		assert.Nil(t, result)
+	})
+
+	t.Run("integration with ProjectConfigurator", func(t *testing.T) {
+		cfg, err := Build(Local, WithProjectConfigurator(&StructProjectConfigurator{}))
+		assert.NoError(t, err)
+
+		result, ok := GetProjectConfig[TestAppConfig](cfg)
+		assert.True(t, ok)
+		assert.NotNil(t, result)
+		assert.Equal(t, "from-configurator", result.AppName)
+		assert.Equal(t, 3000, result.Port)
+	})
+}
+
+// StructProjectConfigurator sets ProjectConfig as a struct
+type StructProjectConfigurator struct{}
+
+func (s *StructProjectConfigurator) Build(c *Config) error {
+	c.ProjectConfig = &TestAppConfig{
+		AppName: "from-configurator",
+		Port:    3000,
+		Debug:   false,
+	}
+	return nil
+}
