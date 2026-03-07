@@ -126,5 +126,5 @@ func TestBuildVaultUnexpectedSecretError(t *testing.T) {
 
 	_, err := d.Build()
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "vault error for rds-db")
+	assert.Contains(t, err.Error(), "postgres: unable to get database")
 }

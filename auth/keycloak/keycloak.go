@@ -2,12 +2,12 @@ package keycloak
 
 import (
 	"context"
-	"fmt"
-	vaultHelper "github.com/keloran/vault-helper"
+	"strings"
 
 	"github.com/Nerzal/gocloak/v13"
 	"github.com/bugfixes/go-bugfixes/logs"
 	"github.com/caarlos0/env/v8"
+	vaultHelper "github.com/keloran/vault-helper"
 )
 
 type VaultDetails struct {
@@ -59,21 +59,25 @@ func (s *System) Build() (*Details, error) {
 	return gen, nil
 }
 
+func isVaultKeyNotFound(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "not found")
+}
+
 func (s *System) buildVault() (*Details, error) {
 	key := &Details{}
 	vh := *s.VaultHelper
 
 	if err := vh.GetSecrets(s.VaultDetails.DetailsPath); err != nil {
-		return key, logs.Errorf("failed to get detail secrets from vault: %v", err)
+		return key, logs.Errorf("keycloak: unable to get detail secrets: %v", err)
 	}
 	if vh.Secrets() == nil {
-		return key, logs.Error("no keycloak secrets found")
+		return key, logs.Error("keycloak: unable to find secrets")
 	}
 
 	if s.Details.Client == "" {
 		secret, err := vh.GetSecret("keycloak-client")
 		if err != nil {
-			return key, logs.Errorf("failed to get clientid: %v", err)
+			return key, logs.Errorf("keycloak: unable to get client id: %v", err)
 		}
 		key.Client = secret
 	} else {
@@ -83,7 +87,7 @@ func (s *System) buildVault() (*Details, error) {
 	if s.Details.Secret == "" {
 		secret, err := vh.GetSecret("keycloak-secret")
 		if err != nil {
-			return key, logs.Errorf("failed to get secret: %v", err)
+			return key, logs.Errorf("keycloak: unable to get secret: %v", err)
 		}
 		key.Secret = secret
 	} else {
@@ -93,7 +97,7 @@ func (s *System) buildVault() (*Details, error) {
 	if s.Details.Realm == "" {
 		secret, err := vh.GetSecret("keycloak-realm")
 		if err != nil {
-			return key, logs.Errorf("failed to get realm: %v", err)
+			return key, logs.Errorf("keycloak: unable to get realm: %v", err)
 		}
 		key.Realm = secret
 	} else {
@@ -103,8 +107,8 @@ func (s *System) buildVault() (*Details, error) {
 	if s.Details.Host == "" {
 		secret, err := vh.GetSecret("keycloak-host")
 		if err != nil {
-			if err.Error() != fmt.Sprint("key: 'keycloak-host' not found") {
-				return key, logs.Errorf("failed to get host: %v", err)
+			if !isVaultKeyNotFound(err) {
+				return key, logs.Errorf("keycloak: unable to get host: %v", err)
 			}
 			secret = "https://keys.chewedfeed.com"
 		}
@@ -120,7 +124,7 @@ func (s *System) buildVault() (*Details, error) {
 func (s *System) buildGeneric() (*Details, error) {
 	key := &Details{}
 	if err := env.Parse(key); err != nil {
-		return nil, logs.Errorf("failed to build generic: %v", err)
+		return nil, logs.Errorf("keycloak: unable to parse env: %v", err)
 	}
 
 	s.Details = *key
@@ -131,7 +135,7 @@ func (s *System) GetClient(ctx context.Context) (*gocloak.GoCloak, *gocloak.JWT,
 	client := gocloak.NewClient(s.Host)
 	token, err := client.LoginClient(ctx, s.Client, s.Secret, s.Realm)
 	if err != nil {
-		return nil, nil, logs.Errorf("failed to login client: %v", err)
+		return nil, nil, logs.Errorf("keycloak: unable to login client: %v", err)
 	}
 
 	return client, token, nil

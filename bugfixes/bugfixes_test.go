@@ -1,11 +1,11 @@
 package bugfixes
 
 import (
-	"errors"
-	vaultHelper "github.com/keloran/vault-helper"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+
+	vaultHelper "github.com/keloran/vault-helper"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBuildGeneric(t *testing.T) {
@@ -71,20 +71,14 @@ func TestBuildVaultNoHost(t *testing.T) {
 	assert.Equal(t, "https://api.bugfix.es/v1", bf.Server)
 }
 
-func TestBuildVaultInvalidHost(t *testing.T) {
-	mockVault := &vaultHelper.MockVaultHelper{
-		KVSecrets: []vaultHelper.KVSecret{
-			{Key: "bugfixes-agentid", Value: "testKey"},
-			{Key: "bugfixes-secret", Value: "testSecret"},
-			{Key: "bugfixes-server", Value: "bob.bob"},
-		},
+func TestBuildGenericInvalidHost(t *testing.T) {
+	os.Clearenv()
+	if err := os.Setenv("BUGFIXES_SERVER", "bob.bob"); err != nil {
+		t.Fatal(err)
 	}
 
-	vd := &vaultHelper.VaultDetails{
-		DetailsPath: "tester",
-	}
 	b := NewSystem()
-	b.Setup(*vd, mockVault)
 	_, err := b.Build()
-	assert.Error(t, errors.New("needs the protocol for server"), err)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "bugfixes: unable to use server without protocol")
 }

@@ -11,15 +11,10 @@ import (
 	vaulthelper "github.com/keloran/vault-helper"
 )
 
+const vaultRefreshBuffer = 3600
+
 type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
-}
-
-type VaultHelper interface {
-	GetSecrets(path string) error
-	GetSecret(key string) (string, error)
-	Secrets() []vaulthelper.KVSecret
-	LeaseDuration() int
 }
 
 type VaultDetails struct {
@@ -165,7 +160,7 @@ func (s *System) buildVault() (*Details, error) {
 }
 
 func (s *System) GetRabbitQueue() (interface{}, error) {
-	if s.VaultHelper != nil && time.Now().Unix() > s.VaultDetails.ExpireTime.Unix() {
+	if s.VaultHelper != nil && time.Now().Unix() > (s.VaultDetails.ExpireTime.Unix()-vaultRefreshBuffer) {
 		_, err := s.Build()
 		if err != nil {
 			return nil, logs.Errorf("rabbit: unable to build rabbit: %v", err)
