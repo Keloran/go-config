@@ -1,4 +1,4 @@
-package ConfigBuilder
+package config
 
 // ProjectProperties is a type for storing project-level configuration properties
 type ProjectProperties map[string]interface{}

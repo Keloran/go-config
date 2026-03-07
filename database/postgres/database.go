@@ -84,14 +84,15 @@ func (s *System) buildGeneric() (*Details, error) {
 }
 
 func vaultSecretError(key string, err error) error {
-	if err != nil {
-		if err.Error() != fmt.Sprintf("key: '%s' not found", key) {
-			return nil
-		}
+	if err == nil {
+		return nil
+	}
+
+	if err.Error() == fmt.Sprintf("key: '%s' not found", key) {
 		return logs.Errorf("failed to get %s: %v", key, err)
 	}
 
-	return nil
+	return logs.Errorf("vault error for %s: %v", key, err)
 }
 
 func (s *System) buildVault() (*Details, error) {
@@ -157,8 +158,10 @@ func (s *System) buildVault() (*Details, error) {
 	// get the db based on the username, since db has a default in env
 	if s.Details.User == "" {
 		secret, err := vh.GetSecret("rds-db")
-		if err := vaultSecretError("rds-db", err); err != nil {
+		if err != nil && err.Error() == fmt.Sprintf("key: '%s' not found", "rds-db") {
 			secret = "postgres"
+		} else if err := vaultSecretError("rds-db", err); err != nil {
+			return nil, err
 		}
 		rds.DBName = secret
 	} else {
@@ -168,8 +171,10 @@ func (s *System) buildVault() (*Details, error) {
 	// get the host based on the username, since host has a default in env
 	if s.Details.User == "" {
 		secret, err := vh.GetSecret("rds-hostname")
-		if err := vaultSecretError("rds-hostname", err); err != nil {
+		if err != nil && err.Error() == fmt.Sprintf("key: '%s' not found", "rds-hostname") {
 			secret = "db.chewed-k8s.net"
+		} else if err := vaultSecretError("rds-hostname", err); err != nil {
+			return nil, err
 		}
 		rds.Host = secret
 	} else {

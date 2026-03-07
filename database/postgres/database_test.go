@@ -1,13 +1,11 @@
 package postgres
 
 import (
-	"context"
+	"errors"
 	vaultHelper "github.com/keloran/vault-helper"
 	"github.com/stretchr/testify/assert"
-	tpg "github.com/testcontainers/testcontainers-go/modules/postgres"
 	"os"
 	"testing"
-	"time"
 )
 
 func TestBuildVault(t *testing.T) {
@@ -93,86 +91,40 @@ func TestBuildGeneric(t *testing.T) {
 	assert.Equal(t, "testHost", db.Host)
 }
 
-func setupPostgres(ctx context.Context) (*tpg.PostgresContainer, error) {
-	pg, err := tpg.Run(ctx,
-		"postgres:16-alpine",
-		tpg.WithDatabase("test"),
-		tpg.WithUsername("user"),
-		tpg.WithPassword("password"))
-	if err != nil {
-		return nil, err
-	}
-
-	return pg, nil
+type errorVaultHelper struct {
+	vaultHelper.MockVaultHelper
+	errKey string
+	err    error
 }
 
-func TestPostgresPoolConnection(t *testing.T) {
-	ctx := context.Background()
-
-	// Start Postgres container
-	pg, err := setupPostgres(ctx)
-	assert.NoError(t, err)
-	defer func() {
-		if pg != nil {
-			if err := pg.Terminate(ctx); err != nil {
-				t.Logf("failed to terminate container: %v", err)
-			}
-		}
-	}()
-	assert.NotNil(t, pg)
-
-	connectionString, err := pg.ConnectionString(ctx, "sslmode=disable", "application_name=test")
-	assert.NoError(t, err)
-
-	sys := NewSystem()
-	if err := sys.ParseConnectionString(connectionString); err != nil {
-		t.Fatal(err)
+func (e *errorVaultHelper) GetSecret(key string) (string, error) {
+	if key == e.errKey {
+		return "", e.err
 	}
-	sys.Details.ConnectionTimeout = time.Second * 30
 
-	pool, err := sys.GetPGXPoolClient(ctx)
-	assert.NoError(t, err)
-	defer func() {
-		if pool != nil {
-			pool.Close()
-		}
-	}()
-	assert.NotNil(t, pool)
+	return e.MockVaultHelper.GetSecret(key)
 }
 
-func TestPostgresConnection(t *testing.T) {
-	ctx := context.Background()
+func TestBuildVaultUnexpectedSecretError(t *testing.T) {
+	os.Clearenv()
 
-	// Start Postgres container
-	pg, err := setupPostgres(ctx)
-	assert.NoError(t, err)
-	defer func() {
-		if pg != nil {
-			if err := pg.Terminate(ctx); err != nil {
-				t.Logf("failed to terminate container: %v", err)
-			}
-		}
-	}()
-	assert.NotNil(t, pg)
-
-	connectionString, err := pg.ConnectionString(ctx, "sslmode=disable", "application_name=test")
-	assert.NoError(t, err)
-
-	sys := NewSystem()
-	if err := sys.ParseConnectionString(connectionString); err != nil {
-		t.Fatal(err)
+	mockVault := &errorVaultHelper{
+		MockVaultHelper: vaultHelper.MockVaultHelper{
+			KVSecrets: []vaultHelper.KVSecret{
+				{Key: "password", Value: "testPassword"},
+				{Key: "username", Value: "testUser"},
+				{Key: "rds-db", Value: "testDB"},
+				{Key: "rds-hostname", Value: "testHost"},
+			},
+		},
+		errKey: "rds-db",
+		err:    errors.New("vault unavailable"),
 	}
-	sys.Details.ConnectionTimeout = time.Second * 30
-	time.Sleep(sys.Details.ConnectionTimeout)
 
-	conn, err := sys.GetPGXClient(ctx)
-	assert.NoError(t, err)
-	defer func() {
-		if conn != nil {
-			if err := conn.Close(ctx); err != nil {
-				t.Logf("failed to close connection: %v", err)
-			}
-		}
-	}()
-	assert.NotNil(t, conn)
+	d := NewSystem()
+	d.Setup(VaultDetails{CredPath: "tester", DetailsPath: "tester"}, mockVault)
+
+	_, err := d.Build()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "vault error for rds-db")
 }

@@ -1,4 +1,4 @@
-package ConfigBuilder
+package config
 
 import (
 	"github.com/keloran/go-config/auth/clerk"
