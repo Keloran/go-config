@@ -9,8 +9,8 @@ import (
 	"github.com/bugfixes/go-bugfixes/logs"
 	"github.com/caarlos0/env/v8"
 	vaultHelper "github.com/keloran/vault-helper"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 type VaultDetails struct {
@@ -44,7 +44,7 @@ type System struct {
 }
 
 type MungoOperations interface {
-	GetMongoClient(ctx context.Context, m System) (*mongo.Client, error)
+	GetMongoClient(m System) (*mongo.Client, error)
 	GetMongoDatabase(m System) (*mongo.Database, error)
 	GetMongoCollection(m System, collection string) (*mongo.Collection, error)
 	InsertOne(ctx context.Context, document interface{}) (*mongo.InsertOneResult, error)
@@ -59,7 +59,7 @@ type MungoOperations interface {
 }
 
 type MungoClient interface {
-	Connect(ctx context.Context, opts ...*options.ClientOptions) (*mongo.Client, error)
+	Connect(opts ...*options.ClientOptions) (*mongo.Client, error)
 }
 
 func NewSystem() *System {
@@ -92,16 +92,16 @@ func (s *System) buildVault() (*Details, error) {
 
 	// Credentials
 	if err := vh.GetSecrets(s.VaultDetails.CredPath); err != nil {
-		return nil, logs.Errorf("failed to get mongo secrets: %v", err)
+		return nil, logs.Errorf("mongo: unable to get credential secrets: %v", err)
 	}
 	if vh.Secrets() == nil {
-		return nil, logs.Error("no mongo secrets found")
+		return nil, logs.Error("mongo: unable to find credential secrets")
 	}
 
 	if s.Details.Username == "" {
 		secret, err := vh.GetSecret("username")
 		if err != nil {
-			return nil, logs.Errorf("failed to get username: %v", err)
+			return nil, logs.Errorf("mongo: unable to get username: %v", err)
 		}
 		rab.Username = secret
 	} else {
@@ -111,7 +111,7 @@ func (s *System) buildVault() (*Details, error) {
 	if s.Details.Password == "" {
 		secret, err := vh.GetSecret("password")
 		if err != nil {
-			return nil, logs.Errorf("failed to get password: %v", err)
+			return nil, logs.Errorf("mongo: unable to get password: %v", err)
 		}
 		rab.Password = secret
 	} else {
@@ -120,16 +120,16 @@ func (s *System) buildVault() (*Details, error) {
 
 	// Details
 	if err := vh.GetSecrets(s.VaultDetails.DetailsPath); err != nil {
-		return nil, logs.Errorf("failed to get mongo details: %v", err)
+		return nil, logs.Errorf("mongo: unable to get detail secrets: %v", err)
 	}
 	if vh.Secrets() == nil {
-		return nil, logs.Error("no mongo details found")
+		return nil, logs.Error("mongo: unable to find detail secrets")
 	}
 
 	if s.Details.Host == "" {
 		secret, err := vh.GetSecret("mongo-hostname")
 		if err != nil {
-			return nil, logs.Errorf("failed to get hostname: %v", err)
+			return nil, logs.Errorf("mongo: unable to get hostname: %v", err)
 		}
 		rab.Host = secret
 	} else {
@@ -139,7 +139,7 @@ func (s *System) buildVault() (*Details, error) {
 	if s.Details.Database == "" {
 		secret, err := vh.GetSecret("mongo-db")
 		if err != nil {
-			return nil, logs.Errorf("failed to get database: %v", err)
+			return nil, logs.Errorf("mongo: unable to get database: %v", err)
 		}
 		rab.Database = secret
 	} else {
@@ -148,14 +148,14 @@ func (s *System) buildVault() (*Details, error) {
 
 	preCollections, err := vh.GetSecret("mongo-collections")
 	if err != nil {
-		return nil, logs.Errorf("failed to get collections: %v", err)
+		return nil, logs.Errorf("mongo: unable to get collections: %v", err)
 	}
 	rabCollections := make(map[string]string)
 	collections := strings.Split(preCollections, ",")
 	for _, c := range collections {
 		cols := strings.Split(c, ":")
 		if len(cols) != 2 {
-			return nil, logs.Errorf("collection not in correct format: %v", c)
+			return nil, logs.Errorf("mongo: unable to parse collection format: %v", c)
 		}
 		rabCollections[cols[0]] = cols[1]
 	}
@@ -171,7 +171,7 @@ func (s *System) buildGeneric() (*Details, error) {
 	rab := &Details{}
 
 	if err := env.Parse(rab); err != nil {
-		return nil, logs.Errorf("failed to parse env: %v", err)
+		return nil, logs.Errorf("mongo: unable to parse env: %v", err)
 	}
 
 	// Build Collections

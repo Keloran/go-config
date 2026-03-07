@@ -64,7 +64,7 @@ func NewConfigNoVault() *Config {
 func Local(cfg *Config) error {
 	l, err := local.Build()
 	if err != nil {
-		return logs.Errorf("build local: %v", err)
+		return logs.Errorf("config: unable to build local: %v", err)
 	}
 
 	cfg.Local = *l
@@ -75,7 +75,7 @@ func Local(cfg *Config) error {
 func Vault(cfg *Config) error {
 	v, vh, err := vault.Build()
 	if err != nil {
-		return logs.Errorf("build vault: %v", err)
+		return logs.Errorf("config: unable to build vault: %v", err)
 	}
 
 	cfg.Vault = *v
@@ -285,7 +285,7 @@ func Bugfixes(cfg *Config) error {
 func Flags(cfg *Config) error {
 	f, err := flags.Build()
 	if err != nil {
-		return logs.Errorf("failed to build flags: %v", err)
+		return logs.Errorf("flags: unable to build: %v", err)
 	}
 	cfg.Flags = *f
 	return nil
@@ -295,7 +295,7 @@ func Build(opts ...BuildOption) (*Config, error) {
 	cfg := &Config{}
 
 	if err := cfg.Build(opts...); err != nil {
-		return nil, logs.Errorf("build config: %v", err)
+		return nil, logs.Errorf("config: unable to build: %v", err)
 	}
 
 	return cfg, nil
@@ -307,7 +307,7 @@ func buildSubsystem[T any](cfg *Config, subsystem subsystemConfigurator[T]) erro
 	}
 
 	if err := subsystem.build(subsystem.system); err != nil {
-		return logs.Errorf("failed to build %s: %v", subsystem.name, err)
+		return logs.Errorf("%s: unable to build: %v", subsystem.name, err)
 	}
 
 	subsystem.assign(subsystem.system)
@@ -318,7 +318,7 @@ func BuildLocal(opts ...BuildOption) (*Config, error) {
 	cfg := &Config{}
 
 	if err := cfg.Build(opts...); err != nil {
-		return nil, logs.Errorf("build config: %v", err)
+		return nil, logs.Errorf("config: unable to build local: %v", err)
 	}
 
 	return cfg, nil
@@ -330,7 +330,7 @@ func BuildLocalVH(mockVault vaultHelper.VaultHelper, opts ...BuildOption) (*Conf
 	}
 
 	if err := cfg.Build(opts...); err != nil {
-		return nil, logs.Errorf("build config: %v", err)
+		return nil, logs.Errorf("config: unable to build with vault: %v", err)
 	}
 
 	return cfg, nil
@@ -339,7 +339,7 @@ func BuildLocalVH(mockVault vaultHelper.VaultHelper, opts ...BuildOption) (*Conf
 func (c *Config) Build(opts ...BuildOption) error {
 	for _, opt := range opts {
 		if err := opt(c); err != nil {
-			return logs.Errorf("build configOptions: %v", err)
+			return logs.Errorf("config: unable to apply option: %v", err)
 		}
 	}
 
@@ -353,7 +353,7 @@ type ProjectConfigurator interface {
 func WithProjectConfigurator(pc ProjectConfigurator) BuildOption {
 	return func(c *Config) error {
 		if err := pc.Build(c); err != nil {
-			return logs.Errorf("withProjectConfigurator: %v", err)
+			return logs.Errorf("config: unable to apply project configurator: %v", err)
 		}
 
 		return nil

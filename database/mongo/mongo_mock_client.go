@@ -13,8 +13,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	mongo0 "go.mongodb.org/mongo-driver/mongo"
-	options "go.mongodb.org/mongo-driver/mongo/options"
+	mongo0 "go.mongodb.org/mongo-driver/v2/mongo"
+	options "go.mongodb.org/mongo-driver/v2/mongo/options"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -115,18 +115,18 @@ func (mr *MockMungoOperationsMockRecorder) FindOne(ctx, filter any) *gomock.Call
 }
 
 // GetMongoClient mocks base method.
-func (m_2 *MockMungoOperations) GetMongoClient(ctx context.Context, m System) (*mongo0.Client, error) {
+func (m_2 *MockMungoOperations) GetMongoClient(m System) (*mongo0.Client, error) {
 	m_2.ctrl.T.Helper()
-	ret := m_2.ctrl.Call(m_2, "GetMongoClient", ctx, m)
+	ret := m_2.ctrl.Call(m_2, "GetMongoClient", m)
 	ret0, _ := ret[0].(*mongo0.Client)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetMongoClient indicates an expected call of GetMongoClient.
-func (mr *MockMungoOperationsMockRecorder) GetMongoClient(ctx, m any) *gomock.Call {
+func (mr *MockMungoOperationsMockRecorder) GetMongoClient(m any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMongoClient", reflect.TypeOf((*MockMungoOperations)(nil).GetMongoClient), ctx, m)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMongoClient", reflect.TypeOf((*MockMungoOperations)(nil).GetMongoClient), m)
 }
 
 // GetMongoCollection mocks base method.
@@ -243,9 +243,9 @@ func (m *MockMungoClient) EXPECT() *MockMungoClientMockRecorder {
 }
 
 // Connect mocks base method.
-func (m *MockMungoClient) Connect(ctx context.Context, opts ...*options.ClientOptions) (*mongo0.Client, error) {
+func (m *MockMungoClient) Connect(opts ...*options.ClientOptions) (*mongo0.Client, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{ctx}
+	varargs := []any{}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
@@ -256,8 +256,7 @@ func (m *MockMungoClient) Connect(ctx context.Context, opts ...*options.ClientOp
 }
 
 // Connect indicates an expected call of Connect.
-func (mr *MockMungoClientMockRecorder) Connect(ctx any, opts ...any) *gomock.Call {
+func (mr *MockMungoClientMockRecorder) Connect(opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Connect", reflect.TypeOf((*MockMungoClient)(nil).Connect), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Connect", reflect.TypeOf((*MockMungoClient)(nil).Connect), opts...)
 }

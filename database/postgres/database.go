@@ -3,8 +3,6 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"net/url"
 	"strconv"
 	"strings"
@@ -12,8 +10,12 @@ import (
 
 	"github.com/bugfixes/go-bugfixes/logs"
 	"github.com/caarlos0/env/v8"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	vaultHelper "github.com/keloran/vault-helper"
 )
+
+const vaultRefreshBuffer = 3600
 
 type VaultDetails struct {
 	CredPath    string `env:"RDS_VAULT_CRED_PATH" envDefault:"secret/data/chewedfeed/postgres"`
@@ -69,7 +71,7 @@ func (s *System) Build() (*Details, error) {
 func (s *System) buildGeneric() (*Details, error) {
 	rds := &Details{}
 	if err := env.Parse(rds); err != nil {
-		return rds, logs.Errorf("failed to parse database env: %v", err)
+		return rds, logs.Errorf("postgres: unable to parse env: %v", err)
 	}
 
 	s.Details = *rds
@@ -83,16 +85,8 @@ func (s *System) buildGeneric() (*Details, error) {
 	return rds, nil
 }
 
-func vaultSecretError(key string, err error) error {
-	if err == nil {
-		return nil
-	}
-
-	if err.Error() == fmt.Sprintf("key: '%s' not found", key) {
-		return logs.Errorf("failed to get %s: %v", key, err)
-	}
-
-	return logs.Errorf("vault error for %s: %v", key, err)
+func isVaultKeyNotFound(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "not found")
 }
 
 func (s *System) buildVault() (*Details, error) {
@@ -101,16 +95,16 @@ func (s *System) buildVault() (*Details, error) {
 
 	// Get Credentials
 	if err := vh.GetSecrets(s.VaultDetails.CredPath); err != nil {
-		return rds, logs.Errorf("failed to get cred secrets from vault: %v", err)
+		return rds, logs.Errorf("postgres: unable to get credential secrets: %v", err)
 	}
 	if vh.Secrets() == nil {
-		return rds, logs.Error("no rds cred secrets found")
+		return rds, logs.Error("postgres: unable to find credential secrets")
 	}
 
 	if s.Details.User == "" {
 		secret, err := vh.GetSecret("username")
-		if err := vaultSecretError("username", err); err != nil {
-			return nil, logs.Errorf("failed to get username: %v", err)
+		if err != nil {
+			return nil, logs.Errorf("postgres: unable to get username: %v", err)
 		}
 		rds.User = secret
 	} else {
@@ -119,8 +113,8 @@ func (s *System) buildVault() (*Details, error) {
 
 	if s.Details.Password == "" {
 		secret, err := vh.GetSecret("password")
-		if err := vaultSecretError("password", err); err != nil {
-			return nil, logs.Errorf("failed to get password: %v", err)
+		if err != nil {
+			return nil, logs.Errorf("postgres: unable to get password: %v", err)
 		}
 		rds.Password = secret
 	} else {
@@ -129,25 +123,25 @@ func (s *System) buildVault() (*Details, error) {
 
 	// Get Details
 	if err := vh.GetSecrets(s.VaultDetails.DetailsPath); err != nil {
-		return rds, logs.Errorf("failed to get local secrets from vault: %v", err)
+		return rds, logs.Errorf("postgres: unable to get detail secrets: %v", err)
 	}
 	if vh.Secrets() == nil {
-		return rds, logs.Error("no rds detail secrets found")
+		return rds, logs.Error("postgres: unable to find detail secrets")
 	}
 
 	// get the port based on the username, since port has a default in env
 	if s.Details.User == "" && s.Details.Port == 5432 {
 		secret, err := vh.GetSecret("rds-port")
 		if err != nil {
-			if err.Error() != fmt.Sprint("key: 'rds-port' not found") {
-				return nil, logs.Errorf("failed to get port: %v", err)
+			if !isVaultKeyNotFound(err) {
+				return nil, logs.Errorf("postgres: unable to get port: %v", err)
 			}
 			secret = "5432"
 		}
 		if secret != "" {
 			iport, err := strconv.Atoi(secret)
 			if err != nil {
-				return nil, logs.Errorf("failed to parse port: %v", err)
+				return nil, logs.Errorf("postgres: unable to parse port: %v", err)
 			}
 			rds.Port = iport
 		}
@@ -158,10 +152,11 @@ func (s *System) buildVault() (*Details, error) {
 	// get the db based on the username, since db has a default in env
 	if s.Details.User == "" {
 		secret, err := vh.GetSecret("rds-db")
-		if err != nil && err.Error() == fmt.Sprintf("key: '%s' not found", "rds-db") {
+		if err != nil {
+			if !isVaultKeyNotFound(err) {
+				return nil, logs.Errorf("postgres: unable to get database: %v", err)
+			}
 			secret = "postgres"
-		} else if err := vaultSecretError("rds-db", err); err != nil {
-			return nil, err
 		}
 		rds.DBName = secret
 	} else {
@@ -171,10 +166,11 @@ func (s *System) buildVault() (*Details, error) {
 	// get the host based on the username, since host has a default in env
 	if s.Details.User == "" {
 		secret, err := vh.GetSecret("rds-hostname")
-		if err != nil && err.Error() == fmt.Sprintf("key: '%s' not found", "rds-hostname") {
+		if err != nil {
+			if !isVaultKeyNotFound(err) {
+				return nil, logs.Errorf("postgres: unable to get hostname: %v", err)
+			}
 			secret = "db.chewed-k8s.net"
-		} else if err := vaultSecretError("rds-hostname", err); err != nil {
-			return nil, err
 		}
 		rds.Host = secret
 	} else {
@@ -188,16 +184,15 @@ func (s *System) buildVault() (*Details, error) {
 }
 
 func (s *System) GetPGXClient(ctx context.Context) (*pgx.Conn, error) {
-	if s.VaultHelper != nil && time.Now().Unix() > (s.VaultDetails.ExpireTime.Unix()-3600) {
+	if s.VaultHelper != nil && time.Now().Unix() > (s.VaultDetails.ExpireTime.Unix()-vaultRefreshBuffer) {
 		logs.Infof("vault expired, rebuilding, new expire time is %v", s.VaultDetails.ExpireTime)
 
 		if _, err := s.buildVault(); err != nil {
-			return nil, logs.Errorf("failed to build vault: %v", err)
+			return nil, logs.Errorf("postgres: unable to rebuild vault config: %v", err)
 		}
 	}
 
 	timeoutContext, cancel := context.WithTimeout(ctx, s.Details.ConnectionTimeout)
-	s.Context = timeoutContext
 	defer cancel()
 
 	client, err := pgx.Connect(timeoutContext, fmt.Sprintf("postgres://%s:%s@%s:%d/%s?%s", s.Details.User, s.Details.Password, s.Details.Host, s.Details.Port, s.Details.DBName, s.Details.ExtraParams))
@@ -205,23 +200,22 @@ func (s *System) GetPGXClient(ctx context.Context) (*pgx.Conn, error) {
 		if strings.Contains(err.Error(), "operation was canceled") {
 			return nil, err
 		}
-		return nil, logs.Errorf("failed to get db client: %v", err)
+		return nil, logs.Errorf("postgres: unable to connect: %v", err)
 	}
 
 	return client, nil
 }
 
 func (s *System) GetPGXPoolClient(ctx context.Context) (*pgxpool.Pool, error) {
-	if s.VaultHelper != nil && time.Now().Unix() > (s.VaultDetails.ExpireTime.Unix()-3600) {
+	if s.VaultHelper != nil && time.Now().Unix() > (s.VaultDetails.ExpireTime.Unix()-vaultRefreshBuffer) {
 		logs.Infof("vault expired, rebuilding, new expire time is %v", s.VaultDetails.ExpireTime)
 
 		if _, err := s.buildVault(); err != nil {
-			return nil, logs.Errorf("failed to build vault: %v", err)
+			return nil, logs.Errorf("postgres: unable to rebuild vault config: %v", err)
 		}
 	}
 
 	timeoutContext, cancel := context.WithTimeout(ctx, s.Details.ConnectionTimeout)
-	s.Context = timeoutContext
 	defer cancel()
 
 	config, err := pgxpool.ParseConfig(fmt.Sprintf("postgres://%s:%s@%s:%d/%s?%s", s.Details.User, s.Details.Password, s.Details.Host, s.Details.Port, s.Details.DBName, s.Details.ExtraParams))
@@ -229,7 +223,7 @@ func (s *System) GetPGXPoolClient(ctx context.Context) (*pgxpool.Pool, error) {
 		if strings.Contains(err.Error(), "operation was canceled") {
 			return nil, err
 		}
-		return nil, logs.Errorf("failed to get db client: %v", err)
+		return nil, logs.Errorf("postgres: unable to parse pool config: %v", err)
 	}
 	config.MaxConns = 10
 	config.MaxConnIdleTime = s.Details.ConnectionTimeout
@@ -239,7 +233,7 @@ func (s *System) GetPGXPoolClient(ctx context.Context) (*pgxpool.Pool, error) {
 		if strings.Contains(err.Error(), "operation was canceled") {
 			return nil, err
 		}
-		return nil, logs.Errorf("failed to get db client: %v", err)
+		return nil, logs.Errorf("postgres: unable to create pool: %v", err)
 	}
 
 	return client, nil
@@ -247,7 +241,7 @@ func (s *System) GetPGXPoolClient(ctx context.Context) (*pgxpool.Pool, error) {
 
 func (s *System) ClosePGX(ctx context.Context, conn *pgx.Conn) error {
 	if err := conn.Close(ctx); err != nil {
-		return logs.Errorf("failed to close db client: %v", err)
+		return logs.Errorf("postgres: unable to close connection: %v", err)
 	}
 	return nil
 }
@@ -255,24 +249,24 @@ func (s *System) ClosePGX(ctx context.Context, conn *pgx.Conn) error {
 func (s *System) ParseConnectionString(connStr string) error {
 	str, err := url.Parse(connStr)
 	if err != nil {
-		return logs.Errorf("failed to parse connection string: %v", err)
+		return logs.Errorf("postgres: unable to parse connection string: %v", err)
 	}
 	if str.Scheme != "postgres" && str.Scheme != "postgresql" {
-		return logs.Errorf("invalid connection string scheme: %s", str.Scheme)
+		return logs.Errorf("postgres: unable to use connection string scheme: %s", str.Scheme)
 	}
 
 	s.Details.Host = str.Hostname()
 	if port, err := strconv.Atoi(str.Port()); err == nil {
 		s.Details.Port = port
 	} else {
-		return logs.Errorf("invalid connection string port: %s", str.Port())
+		return logs.Errorf("postgres: unable to parse connection string port: %s", str.Port())
 	}
 
 	s.Details.User = str.User.Username()
 	if pword, ok := str.User.Password(); ok {
 		s.Details.Password = pword
 	} else {
-		return logs.Error("no password found in connection string")
+		return logs.Error("postgres: unable to find password in connection string")
 	}
 
 	if parts := strings.Split(str.Path, "/"); len(parts) > 1 {

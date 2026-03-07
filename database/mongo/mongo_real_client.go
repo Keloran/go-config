@@ -11,6 +11,8 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
 )
 
+const vaultRefreshBuffer = 3600
+
 type RealMongoOperations struct {
 	Client     *mongo.Client
 	Collection *mongo.Collection
@@ -18,12 +20,12 @@ type RealMongoOperations struct {
 }
 
 func (r *RealMongoOperations) GetMongoClient(m System) (*mongo.Client, error) {
-	if m.VaultHelper != nil && time.Now().Unix() > m.VaultDetails.ExpireTime.Unix() {
+	if m.VaultHelper != nil && time.Now().Unix() > (m.VaultDetails.ExpireTime.Unix()-vaultRefreshBuffer) {
 		mr := NewSystem()
 		mr.Setup(m.VaultDetails, *mr.VaultHelper)
 		_, err := mr.Build()
 		if err != nil {
-			return nil, logs.Errorf("error re-building mongo: %v", err)
+			return nil, logs.Errorf("mongo: unable to rebuild config: %v", err)
 		}
 		m = *mr
 	}
@@ -35,34 +37,39 @@ func (r *RealMongoOperations) GetMongoClient(m System) (*mongo.Client, error) {
 
 	client, err := mongo.Connect(options.Client().ApplyURI(url).SetServerAPIOptions(options.ServerAPI(options.ServerAPIVersion1)), options.Client().SetReadPreference(readpref.SecondaryPreferred()))
 	if err != nil {
-		return nil, logs.Errorf("error connecting to mongo: %v", err)
+		return nil, logs.Errorf("mongo: unable to connect: %v", err)
 	}
 
 	r.Client = client
 	return client, nil
 }
 
-func (r *RealMongoOperations) GetMongoDatabase(m System) (string, error) {
-	if m.VaultHelper != nil && time.Now().Unix() > m.VaultDetails.ExpireTime.Unix() {
+func (r *RealMongoOperations) GetMongoDatabase(m System) (*mongo.Database, error) {
+	if m.VaultHelper != nil && time.Now().Unix() > (m.VaultDetails.ExpireTime.Unix()-vaultRefreshBuffer) {
 		mr := NewSystem()
 		mr.Setup(m.VaultDetails, *mr.VaultHelper)
 		_, err := mr.Build()
 		if err != nil {
-			return "", logs.Errorf("error re-building mongo: %v", err)
+			return nil, logs.Errorf("mongo: unable to rebuild config: %v", err)
 		}
 		m = *mr
 	}
 
-	return m.Details.Database, nil
+	if r.Client == nil {
+		return nil, logs.Error("mongo: unable to get database without client")
+	}
+
+	r.Database = r.Client.Database(m.Details.Database)
+	return r.Database, nil
 }
 
 func (r *RealMongoOperations) GetMongoCollection(m System, collection string) (*mongo.Collection, error) {
-	if m.VaultHelper != nil && time.Now().Unix() > m.VaultDetails.ExpireTime.Unix() {
+	if m.VaultHelper != nil && time.Now().Unix() > (m.VaultDetails.ExpireTime.Unix()-vaultRefreshBuffer) {
 		mr := NewSystem()
 		mr.Setup(m.VaultDetails, *mr.VaultHelper)
 		_, err := mr.Build()
 		if err != nil {
-			return nil, logs.Errorf("error re-building mongo: %v", err)
+			return nil, logs.Errorf("mongo: unable to rebuild config: %v", err)
 		}
 		m = *mr
 	}

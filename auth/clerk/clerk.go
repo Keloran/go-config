@@ -2,8 +2,9 @@ package clerk
 
 import (
 	"context"
-	"fmt"
+	"strings"
 
+	"github.com/bugfixes/go-bugfixes/logs"
 	"github.com/caarlos0/env/v8"
 	vaultHelper "github.com/keloran/vault-helper"
 )
@@ -50,11 +51,15 @@ func (s *System) Build() (*Details, error) {
 func (s *System) buildGeneric() (*Details, error) {
 	clerk := &Details{}
 	if err := env.Parse(clerk); err != nil {
-		return nil, err
+		return nil, logs.Errorf("clerk: unable to parse env: %v", err)
 	}
 
 	s.Details = *clerk
 	return clerk, nil
+}
+
+func isVaultKeyNotFound(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "not found")
 }
 
 func (s *System) buildVault() (*Details, error) {
@@ -62,7 +67,7 @@ func (s *System) buildVault() (*Details, error) {
 	vh := *s.VaultHelper
 
 	if err := vh.GetSecrets(s.VaultDetails.DetailsPath); err != nil {
-		return clerk, err
+		return clerk, logs.Errorf("clerk: unable to get detail secrets: %v", err)
 	}
 	if vh.Secrets() == nil {
 		return clerk, nil
@@ -71,7 +76,7 @@ func (s *System) buildVault() (*Details, error) {
 	if s.Details.Key == "" {
 		secret, err := vh.GetSecret("clerk-key")
 		if err != nil {
-			return clerk, err
+			return clerk, logs.Errorf("clerk: unable to get key: %v", err)
 		}
 		clerk.Key = secret
 	} else {
@@ -81,8 +86,8 @@ func (s *System) buildVault() (*Details, error) {
 	if s.Details.PublicKey == "" {
 		secret, err := vh.GetSecret("clerk-public-key")
 		if err != nil {
-			if err.Error() != fmt.Sprint("key: 'clerk-public-key' not found") {
-				return clerk, err
+			if !isVaultKeyNotFound(err) {
+				return clerk, logs.Errorf("clerk: unable to get public key: %v", err)
 			}
 		}
 		clerk.PublicKey = secret
@@ -93,8 +98,8 @@ func (s *System) buildVault() (*Details, error) {
 	if s.Details.DevUser == "" {
 		secret, err := vh.GetSecret("clerk-dev-user")
 		if err != nil {
-			if err.Error() != fmt.Sprint("key: 'clerk-dev-user' not found") {
-				return clerk, err
+			if !isVaultKeyNotFound(err) {
+				return clerk, logs.Errorf("clerk: unable to get dev user: %v", err)
 			}
 		}
 		clerk.DevUser = secret

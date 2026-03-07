@@ -2,11 +2,11 @@ package bugfixes
 
 import (
 	"context"
-	"fmt"
+	"strings"
+
 	"github.com/bugfixes/go-bugfixes/logs"
 	"github.com/caarlos0/env/v8"
 	vaultHelper "github.com/keloran/vault-helper"
-	"strings"
 )
 
 type Details struct {
@@ -52,15 +52,19 @@ func (s *System) Build() (*Details, error) {
 func (s *System) buildGeneric() (*Details, error) {
 	bf := &Details{}
 	if err := env.Parse(bf); err != nil {
-		return bf, logs.Errorf("failed to parse bugfixes env: %v", err)
+		return bf, logs.Errorf("bugfixes: unable to parse env: %v", err)
 	}
 
 	if !strings.HasPrefix(bf.Server, "http") {
-		return bf, logs.Error("needs the protocol for server")
+		return bf, logs.Error("bugfixes: unable to use server without protocol")
 	}
 
 	s.Details = *bf
 	return bf, nil
+}
+
+func isVaultKeyNotFound(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "not found")
 }
 
 func (s *System) buildVault() (*Details, error) {
@@ -68,17 +72,17 @@ func (s *System) buildVault() (*Details, error) {
 	vh := *s.VaultHelper
 
 	if err := vh.GetSecrets(s.VaultDetails.DetailsPath); err != nil {
-		return bf, logs.Errorf("faiuled to get local bugfix details: %v", err)
+		return bf, logs.Errorf("bugfixes: unable to get detail secrets: %v", err)
 	}
 
 	if vh.Secrets() == nil {
-		return bf, logs.Error("no bugfixes secrets found")
+		return bf, logs.Error("bugfixes: unable to find secrets")
 	}
 
 	if s.Details.AgentKey == "" {
 		secret, err := vh.GetSecret("bugfixes-agentid")
 		if err != nil {
-			return bf, logs.Errorf("failed to get agentid: %v", err)
+			return bf, logs.Errorf("bugfixes: unable to get agent id: %v", err)
 		}
 		bf.AgentKey = secret
 	} else {
@@ -88,7 +92,7 @@ func (s *System) buildVault() (*Details, error) {
 	if s.Details.AgentSecret == "" {
 		secret, err := vh.GetSecret("bugfixes-secret")
 		if err != nil {
-			return bf, logs.Errorf("failed to get secret: %v", err)
+			return bf, logs.Errorf("bugfixes: unable to get secret: %v", err)
 		}
 		bf.AgentSecret = secret
 	} else {
@@ -98,8 +102,8 @@ func (s *System) buildVault() (*Details, error) {
 	if s.Details.Server == "" {
 		secret, err := vh.GetSecret("bugfixes-server")
 		if err != nil {
-			if err.Error() != fmt.Sprint("key: 'bugfixes-server' not found") {
-				return bf, logs.Errorf("failed to get server: %v", err)
+			if !isVaultKeyNotFound(err) {
+				return bf, logs.Errorf("bugfixes: unable to get server: %v", err)
 			}
 			secret = "https://api.bugfix.es/v1"
 		}
@@ -109,7 +113,7 @@ func (s *System) buildVault() (*Details, error) {
 	}
 
 	if !strings.HasPrefix(bf.Server, "http") {
-		return bf, logs.Error("needs the protocol for server")
+		return bf, logs.Error("bugfixes: unable to use server without protocol")
 	}
 
 	s.Details = *bf

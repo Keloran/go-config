@@ -2,7 +2,8 @@ package influx
 
 import (
 	"context"
-	"fmt"
+	"strings"
+
 	"github.com/bugfixes/go-bugfixes/logs"
 	"github.com/caarlos0/env/v8"
 	vaultHelper "github.com/keloran/vault-helper"
@@ -56,11 +57,15 @@ func (s *System) Build() (*Details, error) {
 func (s *System) buildGeneric() (*Details, error) {
 	in := &Details{}
 	if err := env.Parse(in); err != nil {
-		return in, logs.Errorf("failed to parse influx env: %v", err)
+		return in, logs.Errorf("influx: unable to parse env: %v", err)
 	}
 
 	s.Details = *in
 	return in, nil
+}
+
+func isVaultKeyNotFound(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "not found")
 }
 
 func (s *System) buildVault() (*Details, error) {
@@ -69,16 +74,16 @@ func (s *System) buildVault() (*Details, error) {
 
 	// Get Credentials
 	if err := vh.GetSecrets(s.VaultDetails.DetailsPath); err != nil {
-		return in, logs.Errorf("failed to get detail secrets from vault: %v", err)
+		return in, logs.Errorf("influx: unable to get detail secrets: %v", err)
 	}
 	if vh.Secrets() == nil {
-		return in, logs.Error("no influx cred serets found")
+		return in, logs.Error("influx: unable to find credential secrets")
 	}
 
 	if s.Details.Token == "" {
 		secret, err := vh.GetSecret("influx-token")
 		if err != nil {
-			return in, logs.Errorf("failed to get token: %v", err)
+			return in, logs.Errorf("influx: unable to get token: %v", err)
 		}
 		in.Token = secret
 	}
@@ -86,7 +91,7 @@ func (s *System) buildVault() (*Details, error) {
 	if s.Details.Bucket == "" {
 		secret, err := vh.GetSecret("influx-bucket")
 		if err != nil {
-			return in, logs.Errorf("failed to get bucket: %v", err)
+			return in, logs.Errorf("influx: unable to get bucket: %v", err)
 		}
 		in.Bucket = secret
 	}
@@ -94,7 +99,7 @@ func (s *System) buildVault() (*Details, error) {
 	if s.Details.Org == "" {
 		secret, err := vh.GetSecret("influx-org")
 		if err != nil {
-			return in, logs.Errorf("failed to get org: %v", err)
+			return in, logs.Errorf("influx: unable to get org: %v", err)
 		}
 		in.Org = secret
 	}
@@ -103,8 +108,8 @@ func (s *System) buildVault() (*Details, error) {
 	if s.Details.Token == "" {
 		secret, err := vh.GetSecret("influx-hostname")
 		if err != nil {
-			if err.Error() != fmt.Sprint("key: 'influx-hostname' not found") {
-				return in, logs.Errorf("failed to get host: %v", err)
+			if !isVaultKeyNotFound(err) {
+				return in, logs.Errorf("influx: unable to get hostname: %v", err)
 			}
 			secret = "http://db.chewed-k8s.net:8086"
 		}
