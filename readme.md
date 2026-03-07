@@ -1,64 +1,83 @@
 # Config Builder
-This is the config builder for most of my projects
-rather than keep writing the same code over and over again
 
-## Build only Local and Vault
+`go-config` builds shared application configuration from environment variables, Vault, and project-specific extensions.
+
+## Basic usage
+
+Build only the subsystems you need:
+
 ```go
-cfg, err := config.Build(config.Local, config.Vault)
-```
+package main
 
-This can be used with local config services
-```go
-type Config struct {
-  config.Config
-  LocalStuffs
-}
-
-type LocalStuffs struct {
-  Stuff string
-}
-
-func main() {
-  cfg, err := config.Build(config.Local, config.Vault)
-  if err != nil {
-    panic(err)
-  }
-
-  c := Config{}
-  c.Config = cfg
-  c.LocalStuffs = &LocalStuffs{
-    Stuff: "here"
-  }
-}
-```
-
----
-### This is how to create a project configuration
-
-above is the old way, the new way is
-
-```
 import (
- ConfigBuilder "github.com/keloran/go-config"
+	"fmt"
+
+	config "github.com/keloran/go-config"
 )
 
-type ProjectConfig struct {}
+func main() {
+	cfg, err := config.Build(config.Local, config.Vault, config.Postgres)
+	if err != nil {
+		panic(err)
+	}
 
-func (pc ProjectConfig) Build(cfg *ConfigBuilder) error {
-  if cfg.ProjectProperties == nil {
-    c.ProjectProperties = make(map[string]interface{})
-  }
+	fmt.Println(cfg.Local.HTTPPort)
+	fmt.Println(cfg.Database.Host)
+}
+```
 
-  c.ProjectProperties["TestProperty"] = true
-  return nil
+## Project-specific configuration
+
+Projects can extend the shared config with their own data by implementing `ProjectConfigurator`.
+
+```go
+package main
+
+import (
+	"fmt"
+
+	config "github.com/keloran/go-config"
+)
+
+type AppConfig struct {
+	AppName string
+	Debug   bool
+}
+
+type ProjectConfig struct{}
+
+func (pc ProjectConfig) Build(cfg *config.Config) error {
+	if cfg.ProjectProperties == nil {
+		cfg.ProjectProperties = make(config.ProjectProperties)
+	}
+
+	cfg.ProjectProperties.Set("feature_x_enabled", true)
+	cfg.ProjectConfig = &AppConfig{
+		AppName: "example-service",
+		Debug:   true,
+	}
+
+	return nil
 }
 
 func main() {
-  cfg, err := ConfigBuilder.Build(WithProjectConfigurator(ProjectConfig{}))
-  if err != nil {
-    panic(err)
-  }
+	cfg, err := config.Build(
+		config.Local,
+		config.WithProjectConfigurator(ProjectConfig{}),
+	)
+	if err != nil {
+		panic(err)
+	}
 
-  fmt.Printf(cfg.ProjectProperies["TestProperty"])
+	fmt.Println(cfg.ProjectProperties.GetValue("feature_x_enabled"))
+
+	appCfg, ok := config.GetProjectConfig[AppConfig](cfg)
+	if !ok {
+		panic("missing project config")
+	}
+
+	fmt.Println(appCfg.AppName)
 }
 ```
+
+`GetProjectConfig[T]` expects `cfg.ProjectConfig` to be stored as `*T`.
