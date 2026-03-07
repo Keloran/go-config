@@ -249,6 +249,8 @@ func TestBugfixes(t *testing.T) {
 
 	cfg, err := BuildLocalVH(mockVault, Bugfixes)
 	assert.NoError(t, err)
+	assert.NotNil(t, cfg.Bugfixes.Logger)
+	assert.Equal(t, "testKey", cfg.Bugfixes.Logger.AgentID)
 	assert.Equal(t, "testSecret", cfg.Bugfixes.Logger.Secret)
 }
 
