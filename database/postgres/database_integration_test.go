@@ -25,6 +25,26 @@ func setupPostgres(ctx context.Context) (*tpg.PostgresContainer, error) {
 	return pg, nil
 }
 
+func waitForPostgresConnection(ctx context.Context, sys *System, timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+	var lastErr error
+
+	for time.Now().Before(deadline) {
+		conn, err := sys.GetPGXClient(ctx)
+		if err == nil {
+			if closeErr := conn.Close(ctx); closeErr != nil {
+				return closeErr
+			}
+			return nil
+		}
+
+		lastErr = err
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	return lastErr
+}
+
 func TestPostgresPoolConnection(t *testing.T) {
 	ctx := context.Background()
 
@@ -47,6 +67,9 @@ func TestPostgresPoolConnection(t *testing.T) {
 		t.Fatal(err)
 	}
 	sys.Details.ConnectionTimeout = 30 * time.Second
+
+	err = waitForPostgresConnection(ctx, sys, 30*time.Second)
+	assert.NoError(t, err)
 
 	pool, err := sys.GetPGXPoolClient(ctx)
 	assert.NoError(t, err)
@@ -80,6 +103,9 @@ func TestPostgresConnection(t *testing.T) {
 		t.Fatal(err)
 	}
 	sys.Details.ConnectionTimeout = 30 * time.Second
+
+	err = waitForPostgresConnection(ctx, sys, 30*time.Second)
+	assert.NoError(t, err)
 
 	conn, err := sys.GetPGXClient(ctx)
 	assert.NoError(t, err)
