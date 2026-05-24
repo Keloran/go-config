@@ -1,12 +1,15 @@
 package config
 
 import (
+	"errors"
 	"github.com/keloran/go-config/auth/clerk"
 	"github.com/keloran/go-config/flags"
 	"github.com/keloran/go-config/notify/resend"
 	"net/http"
+	"os"
 
 	"github.com/bugfixes/go-bugfixes/logs"
+	"github.com/joho/godotenv"
 	"github.com/keloran/go-config/auth/keycloak"
 	"github.com/keloran/go-config/bugfixes"
 	"github.com/keloran/go-config/database/mongo"
@@ -337,10 +340,30 @@ func BuildLocalVH(mockVault vaultHelper.VaultHelper, opts ...BuildOption) (*Conf
 }
 
 func (c *Config) Build(opts ...BuildOption) error {
+	if err := loadDotEnv(); err != nil {
+		return logs.Errorf("config: unable to load .env: %v", err)
+	}
+
 	for _, opt := range opts {
 		if err := opt(c); err != nil {
 			return logs.Errorf("config: unable to apply option: %v", err)
 		}
+	}
+
+	return nil
+}
+
+func loadDotEnv() error {
+	if _, err := os.Stat(".env"); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil
+		}
+
+		return logs.Errorf("failed to stat .env: %v", err)
+	}
+
+	if err := godotenv.Load(".env"); err != nil {
+		return logs.Errorf("failed to load .env: %v", err)
 	}
 
 	return nil
