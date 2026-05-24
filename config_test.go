@@ -3,11 +3,13 @@ package config
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"testing"
 
 	vaulthelper "github.com/keloran/vault-helper"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type MockVaultHelper struct {
@@ -118,6 +120,44 @@ func TestBuild(t *testing.T) {
 		assert.Equal(t, true, cfg.Local.Development)
 		assert.Equal(t, 8080, cfg.Local.HTTPPort)
 	})
+}
+
+func TestBuild_LoadsDotEnvWhenPresent(t *testing.T) {
+	tempDir := t.TempDir()
+	writeTestFile(t, filepath.Join(tempDir, ".env"), "BUGFIXES_LOCAL_ONLY=true\nHTTP_PORT=1234\n")
+
+	originalWD, err := os.Getwd()
+	require.NoError(t, err)
+	require.NoError(t, os.Chdir(tempDir))
+	t.Cleanup(func() {
+		require.NoError(t, os.Chdir(originalWD))
+	})
+
+	os.Clearenv()
+
+	cfg, err := Build(Local)
+	assert.NoError(t, err)
+	assert.Equal(t, true, cfg.Local.KeepLocal)
+	assert.Equal(t, 1234, cfg.Local.HTTPPort)
+}
+
+func TestBuild_ExistingEnvironmentOverridesDotEnv(t *testing.T) {
+	tempDir := t.TempDir()
+	writeTestFile(t, filepath.Join(tempDir, ".env"), "HTTP_PORT=1234\n")
+
+	originalWD, err := os.Getwd()
+	require.NoError(t, err)
+	require.NoError(t, os.Chdir(tempDir))
+	t.Cleanup(func() {
+		require.NoError(t, os.Chdir(originalWD))
+	})
+
+	os.Clearenv()
+	require.NoError(t, os.Setenv("HTTP_PORT", "4321"))
+
+	cfg, err := Build(Local)
+	assert.NoError(t, err)
+	assert.Equal(t, 4321, cfg.Local.HTTPPort)
 }
 
 func TestRabbit(t *testing.T) {
@@ -448,4 +488,9 @@ func (s *StructProjectConfigurator) Build(c *Config) error {
 		Debug:   false,
 	}
 	return nil
+}
+
+func writeTestFile(t *testing.T, path string, content string) {
+	t.Helper()
+	require.NoError(t, os.WriteFile(path, []byte(content), 0o600))
 }
