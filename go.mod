@@ -14,7 +14,7 @@ require (
 	github.com/testcontainers/testcontainers-go v0.43.0
 	github.com/testcontainers/testcontainers-go/modules/mongodb v0.43.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.43.0
-	go.mongodb.org/mongo-driver/v2 v2.7.0
+	go.mongodb.org/mongo-driver/v2 v2.8.0
 	go.uber.org/mock v0.6.0
 )
 
