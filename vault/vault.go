@@ -23,6 +23,7 @@ type Paths struct {
 	Mongo    Path
 	Rabbit   Path
 	Influx   Path
+	Redis    Path
 	BugFixes Path
 	Clerk    Path
 	Resend   Path

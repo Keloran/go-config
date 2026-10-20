@@ -279,6 +279,29 @@ func TestInflux(t *testing.T) {
 	})
 }
 
+func TestRedis(t *testing.T) {
+	mockVault := &MockVaultHelper{
+		KVSecrets: []vaulthelper.KVSecret{
+			{Key: "redis-hostname", Value: "testHost:6379"},
+			{Key: "redis-password", Value: "testPassword"},
+		},
+	}
+
+	t.Run("redis no set values", func(t *testing.T) {
+		os.Clearenv()
+		cfg, err := BuildLocal(Redis)
+		assert.NoError(t, err)
+		assert.Equal(t, "localhost:6379", cfg.Redis.Host)
+	})
+	t.Run("redis with values", func(t *testing.T) {
+		os.Clearenv()
+		cfg, err := BuildLocalVH(mockVault, Redis)
+		assert.NoError(t, err)
+		assert.Equal(t, "testHost:6379", cfg.Redis.Host)
+		assert.Equal(t, "testPassword", cfg.Redis.Password)
+	})
+}
+
 func TestBugfixes(t *testing.T) {
 	mockVault := &MockVaultHelper{
 		KVSecrets: []vaulthelper.KVSecret{

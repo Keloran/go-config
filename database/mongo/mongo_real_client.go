@@ -3,15 +3,12 @@ package mongo
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/bugfixes/go-bugfixes/logs"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
 )
-
-const vaultRefreshBuffer = 3600
 
 type RealMongoOperations struct {
 	Client     *mongo.Client
@@ -20,16 +17,6 @@ type RealMongoOperations struct {
 }
 
 func (r *RealMongoOperations) GetMongoClient(m System) (*mongo.Client, error) {
-	if m.VaultHelper != nil && time.Now().Unix() > (m.VaultDetails.ExpireTime.Unix()-vaultRefreshBuffer) {
-		mr := NewSystem()
-		mr.Setup(m.VaultDetails, *mr.VaultHelper)
-		_, err := mr.Build()
-		if err != nil {
-			return nil, logs.Errorf("mongo: unable to rebuild config: %v", err)
-		}
-		m = *mr
-	}
-
 	url := fmt.Sprintf("mongodb://%s:%s@%s", m.Username, m.Password, m.Host)
 	if m.RawURL != "" {
 		url = m.RawURL
@@ -45,16 +32,6 @@ func (r *RealMongoOperations) GetMongoClient(m System) (*mongo.Client, error) {
 }
 
 func (r *RealMongoOperations) GetMongoDatabase(m System) (*mongo.Database, error) {
-	if m.VaultHelper != nil && time.Now().Unix() > (m.VaultDetails.ExpireTime.Unix()-vaultRefreshBuffer) {
-		mr := NewSystem()
-		mr.Setup(m.VaultDetails, *mr.VaultHelper)
-		_, err := mr.Build()
-		if err != nil {
-			return nil, logs.Errorf("mongo: unable to rebuild config: %v", err)
-		}
-		m = *mr
-	}
-
 	if r.Client == nil {
 		return nil, logs.Error("mongo: unable to get database without client")
 	}
@@ -64,16 +41,6 @@ func (r *RealMongoOperations) GetMongoDatabase(m System) (*mongo.Database, error
 }
 
 func (r *RealMongoOperations) GetMongoCollection(m System, collection string) (*mongo.Collection, error) {
-	if m.VaultHelper != nil && time.Now().Unix() > (m.VaultDetails.ExpireTime.Unix()-vaultRefreshBuffer) {
-		mr := NewSystem()
-		mr.Setup(m.VaultDetails, *mr.VaultHelper)
-		_, err := mr.Build()
-		if err != nil {
-			return nil, logs.Errorf("mongo: unable to rebuild config: %v", err)
-		}
-		m = *mr
-	}
-
 	r.Collection = r.Client.Database(m.Details.Database).Collection(m.Details.Collections[collection])
 	return r.Collection, nil
 }

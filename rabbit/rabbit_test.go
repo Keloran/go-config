@@ -7,7 +7,6 @@ import (
 	"os"
 	"testing"
 
-	vaultHelper "github.com/keloran/vault-helper"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,39 +30,6 @@ func (m *MockHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	}, nil
 }
 
-func TestVaultBuild(t *testing.T) {
-	mockVault := &vaultHelper.MockVaultHelper{
-		KVSecrets: []vaultHelper.KVSecret{
-			{Key: "rabbit-hostname", Value: "testHost"},
-			{Key: "rabbit-management-hostname", Value: "testManagementHost"},
-			{Key: "rabbit-username", Value: "testUsername"},
-			{Key: "rabbit-password", Value: "testPassword"},
-			{Key: "rabbit-vhost", Value: "testVHost"},
-			{Key: "rabbit-queue", Value: "testQueue"},
-		},
-	}
-
-	vd := &VaultDetails{
-		Address:     "mockAddress",
-		Token:       "mockToken",
-		DetailsPath: "tester",
-	}
-
-	mockHTTPClient := &MockHTTPClient{}
-
-	d := NewSystem(mockHTTPClient)
-	d.Setup(*vd, mockVault)
-	rab, err := d.Build()
-	assert.NoError(t, err)
-
-	assert.Equal(t, "testUsername", rab.Username)
-	assert.Equal(t, "testPassword", rab.Password)
-	assert.Equal(t, "testHost", rab.Host)
-	assert.Equal(t, "testManagementHost", rab.ManagementHost)
-	assert.Equal(t, "testVHost", rab.VHost)
-	assert.Equal(t, "testQueue", rab.Queue)
-}
-
 func TestGenericBuild(t *testing.T) {
 	os.Clearenv()
 
@@ -84,29 +50,14 @@ func TestGenericBuild(t *testing.T) {
 }
 
 func TestGetRabbitQueue(t *testing.T) {
-	mockVault := &vaultHelper.MockVaultHelper{
-		KVSecrets: []vaultHelper.KVSecret{
-			{Key: "rabbit-hostname", Value: "testHost"},
-			{Key: "rabbit-management-hostname", Value: "testManagementHost"},
-			{Key: "rabbit-username", Value: "testUsername"},
-			{Key: "rabbit-password", Value: "testPassword"},
-			{Key: "rabbit-vhost", Value: "testVHost"},
-			{Key: "rabbit-queue", Value: "testQueue"},
-		},
+	d := NewSystem(&MockHTTPClient{})
+	d.Details = Details{
+		Host:     "testHost",
+		Username: "testUsername",
+		Password: "testPassword",
+		VHost:    "testVHost",
+		Queue:    "testQueue",
 	}
-
-	vd := &VaultDetails{
-		Address:     "mockAddress",
-		Token:       "mockToken",
-		DetailsPath: "tester",
-	}
-
-	mockHTTPClient := &MockHTTPClient{}
-
-	d := NewSystem(mockHTTPClient)
-	d.Setup(*vd, mockVault)
-	_, err := d.Build()
-	assert.NoError(t, err)
 
 	result, err := d.GetRabbitQueue()
 	assert.NoError(t, err)

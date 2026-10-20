@@ -4,31 +4,21 @@ import (
 	"context"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/bugfixes/go-bugfixes/logs"
 	"github.com/caarlos0/env/v8"
-	vaultHelper "github.com/keloran/vault-helper"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
-type VaultDetails struct {
-	Path        string `env:"MONGO_VAULT_PATH" envDefault:"secret/data/chewedfeed/mongo"`
-	CredPath    string `env:"MONGO_VAULT_CRED_PATH" envDefault:"secret/data/chewedfeed/mongo"`
-	DetailsPath string `env:"MONGO_VAULT_DETAILS_PATH" envDefault:"secret/data/chewedfeed/details"`
-
-	ExpireTime time.Time
-}
-
 type Details struct {
-	Host     string `env:"MONGO_HOST" envDefault:"localhost"`
-	Username string `env:"MONGO_USER" envDefault:""`
-	Password string `env:"MONGO_PASS" envDefault:""`
-	Database string `env:"MONGO_DB" envDefault:""`
+	Host     string `env:"MONGO_HOST" envDefault:"localhost" vault:"mongo-hostname"`
+	Username string `env:"MONGO_USER" envDefault:"" vault:"username,creds"`
+	Password string `env:"MONGO_PASS" envDefault:"" vault:"password,creds"`
+	Database string `env:"MONGO_DB" envDefault:"" vault:"mongo-db"`
 	RawURL   string `env:"MONGO_URL" envDefault:"mongodb://localhost:27017"`
 
-	Collections map[string]string
+	Collections map[string]string `vault:"mongo-collections"`
 	Collection  string
 }
 
@@ -38,9 +28,6 @@ type System struct {
 	Details
 
 	MongoClient MungoClient
-
-	VaultDetails
-	VaultHelper *vaultHelper.VaultHelper
 }
 
 type MungoOperations interface {
@@ -68,103 +55,8 @@ func NewSystem() *System {
 	}
 }
 
-func (s *System) Setup(vd VaultDetails, vh vaultHelper.VaultHelper) {
-	s.VaultDetails = vd
-	s.VaultHelper = &vh
-}
-
 func (s *System) Build() (*Details, error) {
-	gen, err := s.buildGeneric()
-	if err != nil {
-		return nil, err
-	}
-
-	if s.VaultHelper != nil {
-		return s.buildVault()
-	}
-
-	return gen, nil
-}
-
-func (s *System) buildVault() (*Details, error) {
-	rab := &Details{}
-	vh := *s.VaultHelper
-
-	// Credentials
-	if err := vh.GetSecrets(s.VaultDetails.CredPath); err != nil {
-		return nil, logs.Errorf("mongo: unable to get credential secrets: %v", err)
-	}
-	if vh.Secrets() == nil {
-		return nil, logs.Error("mongo: unable to find credential secrets")
-	}
-
-	if s.Details.Username == "" {
-		secret, err := vh.GetSecret("username")
-		if err != nil {
-			return nil, logs.Errorf("mongo: unable to get username: %v", err)
-		}
-		rab.Username = secret
-	} else {
-		rab.Username = s.Details.Username
-	}
-
-	if s.Details.Password == "" {
-		secret, err := vh.GetSecret("password")
-		if err != nil {
-			return nil, logs.Errorf("mongo: unable to get password: %v", err)
-		}
-		rab.Password = secret
-	} else {
-		rab.Password = s.Details.Password
-	}
-
-	// Details
-	if err := vh.GetSecrets(s.VaultDetails.DetailsPath); err != nil {
-		return nil, logs.Errorf("mongo: unable to get detail secrets: %v", err)
-	}
-	if vh.Secrets() == nil {
-		return nil, logs.Error("mongo: unable to find detail secrets")
-	}
-
-	if s.Details.Host == "" {
-		secret, err := vh.GetSecret("mongo-hostname")
-		if err != nil {
-			return nil, logs.Errorf("mongo: unable to get hostname: %v", err)
-		}
-		rab.Host = secret
-	} else {
-		rab.Host = s.Details.Host
-	}
-
-	if s.Details.Database == "" {
-		secret, err := vh.GetSecret("mongo-db")
-		if err != nil {
-			return nil, logs.Errorf("mongo: unable to get database: %v", err)
-		}
-		rab.Database = secret
-	} else {
-		rab.Database = s.Details.Database
-	}
-
-	preCollections, err := vh.GetSecret("mongo-collections")
-	if err != nil {
-		return nil, logs.Errorf("mongo: unable to get collections: %v", err)
-	}
-	rabCollections := make(map[string]string)
-	collections := strings.Split(preCollections, ",")
-	for _, c := range collections {
-		cols := strings.Split(c, ":")
-		if len(cols) != 2 {
-			return nil, logs.Errorf("mongo: unable to parse collection format: %v", c)
-		}
-		rabCollections[cols[0]] = cols[1]
-	}
-	rab.Collections = rabCollections
-
-	s.Details = *rab
-
-	return rab, nil
-
+	return s.buildGeneric()
 }
 
 func (s *System) buildGeneric() (*Details, error) {
