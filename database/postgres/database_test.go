@@ -1,66 +1,11 @@
 package postgres
 
 import (
-	"errors"
-	vaultHelper "github.com/keloran/vault-helper"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
-
-func TestBuildVault(t *testing.T) {
-	os.Clearenv()
-	mockVault := &vaultHelper.MockVaultHelper{
-		KVSecrets: []vaultHelper.KVSecret{
-			{Key: "password", Value: "testPassword"},
-			{Key: "username", Value: "testUser"},
-			{Key: "rds-port", Value: "1111"},
-			{Key: "rds-db", Value: "testDB"},
-			{Key: "rds-hostname", Value: "testHost"},
-		},
-	}
-
-	vd := &VaultDetails{
-		CredPath:    "tester",
-		DetailsPath: "tester",
-	}
-	d := NewSystem()
-	d.Setup(*vd, mockVault)
-	db, err := d.Build()
-	assert.NoError(t, err)
-
-	assert.Equal(t, "testPassword", db.Password)
-	assert.Equal(t, "testUser", db.User)
-	assert.Equal(t, 1111, db.Port)
-	assert.Equal(t, "testDB", db.DBName)
-	assert.Equal(t, "testHost", db.Host)
-}
-
-func TestBuildVaultNoPort(t *testing.T) {
-	mockVault := &vaultHelper.MockVaultHelper{
-		KVSecrets: []vaultHelper.KVSecret{
-			{Key: "password", Value: "testPassword"},
-			{Key: "username", Value: "testUser"},
-			{Key: "rds-db", Value: "testDB"},
-			{Key: "rds-hostname", Value: "testHost"},
-		},
-	}
-
-	vd := &VaultDetails{
-		CredPath:    "tester",
-		DetailsPath: "tester",
-	}
-	d := NewSystem()
-	d.Setup(*vd, mockVault)
-	db, err := d.Build()
-	assert.NoError(t, err)
-
-	assert.Equal(t, "testPassword", db.Password)
-	assert.Equal(t, "testUser", db.User)
-	assert.Equal(t, 5432, db.Port)
-	assert.Equal(t, "testDB", db.DBName)
-	assert.Equal(t, "testHost", db.Host)
-}
 
 func TestBuildGeneric(t *testing.T) {
 	os.Clearenv()
@@ -89,42 +34,4 @@ func TestBuildGeneric(t *testing.T) {
 	assert.Equal(t, 1111, db.Port)
 	assert.Equal(t, "testDB", db.DBName)
 	assert.Equal(t, "testHost", db.Host)
-}
-
-type errorVaultHelper struct {
-	vaultHelper.MockVaultHelper
-	errKey string
-	err    error
-}
-
-func (e *errorVaultHelper) GetSecret(key string) (string, error) {
-	if key == e.errKey {
-		return "", e.err
-	}
-
-	return e.MockVaultHelper.GetSecret(key)
-}
-
-func TestBuildVaultUnexpectedSecretError(t *testing.T) {
-	os.Clearenv()
-
-	mockVault := &errorVaultHelper{
-		MockVaultHelper: vaultHelper.MockVaultHelper{
-			KVSecrets: []vaultHelper.KVSecret{
-				{Key: "password", Value: "testPassword"},
-				{Key: "username", Value: "testUser"},
-				{Key: "rds-db", Value: "testDB"},
-				{Key: "rds-hostname", Value: "testHost"},
-			},
-		},
-		errKey: "rds-db",
-		err:    errors.New("vault unavailable"),
-	}
-
-	d := NewSystem()
-	d.Setup(VaultDetails{CredPath: "tester", DetailsPath: "tester"}, mockVault)
-
-	_, err := d.Build()
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "postgres: unable to get database")
 }

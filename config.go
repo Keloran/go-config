@@ -17,6 +17,7 @@ import (
 	"github.com/keloran/go-config/influx"
 	"github.com/keloran/go-config/local"
 	"github.com/keloran/go-config/rabbit"
+	"github.com/keloran/go-config/redis"
 	"github.com/keloran/go-config/vault"
 
 	vaultHelper "github.com/keloran/vault-helper"
@@ -34,6 +35,7 @@ type Config struct {
 	Mongo    mongo.System
 	Rabbit   rabbit.System
 	Influx   influx.System
+	Redis    redis.System
 	Bugfixes bugfixes.System
 	Clerk    clerk.System
 	Resend   resend.System
@@ -45,14 +47,6 @@ type Config struct {
 }
 
 type BuildOption func(*Config) error
-
-type subsystemConfigurator[T any] struct {
-	name       string
-	system     *T
-	setupVault func(*T, vault.Paths, vaultHelper.VaultHelper)
-	build      func(*T) error
-	assign     func(*T)
-}
 
 func NewConfig(vh vaultHelper.VaultHelper) *Config {
 	return &Config{
@@ -87,6 +81,24 @@ func Vault(cfg *Config) error {
 	return nil
 }
 
+// fillVault fills any `vault` tagged fields still unset by env, only when vault is configured
+func fillVault(cfg *Config, name string, p vault.Path, details any) error {
+	if cfg.VaultHelper == nil {
+		return nil
+	}
+	if err := vault.Fill(*cfg.VaultHelper, p, details); err != nil {
+		return logs.Errorf("%s: unable to fill from vault: %v", name, err)
+	}
+	return nil
+}
+
+func credsPath(p vault.Path, def string) vault.Path {
+	if p.Credentials == "" {
+		p.Credentials = def
+	}
+	return p
+}
+
 // Database deprecated: use Postgres instead
 func Database(cfg *Config) error {
 	return Postgres(cfg)
@@ -94,195 +106,118 @@ func Database(cfg *Config) error {
 
 func Postgres(cfg *Config) error {
 	d := postgres.NewSystem()
-	return buildSubsystem(cfg, subsystemConfigurator[postgres.System]{
-		name:   "database",
-		system: d,
-		setupVault: func(d *postgres.System, paths vault.Paths, vh vaultHelper.VaultHelper) {
-			vd := postgres.VaultDetails{}
-			if paths.Database.Details != "" {
-				vd.DetailsPath = paths.Database.Details
-			}
-			if paths.Database.Credentials != "" {
-				vd.CredPath = paths.Database.Credentials
-			}
-			d.Setup(vd, vh)
-		},
-		build: func(d *postgres.System) error {
-			_, err := d.Build()
-			return err
-		},
-		assign: func(d *postgres.System) {
-			cfg.Database = *d
-		},
-	})
+	if _, err := d.Build(); err != nil {
+		return logs.Errorf("database: unable to build: %v", err)
+	}
+	if err := fillVault(cfg, "database", credsPath(cfg.VaultPaths.Database, "secret/data/chewedfeed/postgres"), &d.Details); err != nil {
+		return err
+	}
+	cfg.Database = *d
+	return nil
 }
 
 func Mongo(cfg *Config) error {
 	m := mongo.NewSystem()
-	return buildSubsystem(cfg, subsystemConfigurator[mongo.System]{
-		name:   "mongo",
-		system: m,
-		setupVault: func(m *mongo.System, paths vault.Paths, vh vaultHelper.VaultHelper) {
-			vd := mongo.VaultDetails{}
-			if paths.Mongo.Details != "" {
-				vd.DetailsPath = paths.Mongo.Details
-			}
-			if paths.Mongo.Credentials != "" {
-				vd.CredPath = paths.Mongo.Credentials
-			}
-			m.Setup(vd, vh)
-		},
-		build: func(m *mongo.System) error {
-			_, err := m.Build()
-			return err
-		},
-		assign: func(m *mongo.System) {
-			cfg.Mongo = *m
-		},
-	})
+	if _, err := m.Build(); err != nil {
+		return logs.Errorf("mongo: unable to build: %v", err)
+	}
+	if err := fillVault(cfg, "mongo", credsPath(cfg.VaultPaths.Mongo, "secret/data/chewedfeed/mongo"), &m.Details); err != nil {
+		return err
+	}
+	cfg.Mongo = *m
+	return nil
 }
 
 func Keycloak(cfg *Config) error {
 	k := keycloak.NewSystem()
-	return buildSubsystem(cfg, subsystemConfigurator[keycloak.System]{
-		name:   "keycloak",
-		system: k,
-		setupVault: func(k *keycloak.System, paths vault.Paths, vh vaultHelper.VaultHelper) {
-			vd := keycloak.VaultDetails{}
-			if paths.Keycloak.Details != "" {
-				vd.DetailsPath = paths.Keycloak.Details
-			}
-			k.Setup(vd, vh)
-		},
-		build: func(k *keycloak.System) error {
-			_, err := k.Build()
-			return err
-		},
-		assign: func(k *keycloak.System) {
-			cfg.Keycloak = *k
-		},
-	})
+	if _, err := k.Build(); err != nil {
+		return logs.Errorf("keycloak: unable to build: %v", err)
+	}
+	if err := fillVault(cfg, "keycloak", cfg.VaultPaths.Keycloak, &k.Details); err != nil {
+		return err
+	}
+	cfg.Keycloak = *k
+	return nil
 }
 
 func Rabbit(cfg *Config) error {
 	r := rabbit.NewSystem(&http.Client{})
-	return buildSubsystem(cfg, subsystemConfigurator[rabbit.System]{
-		name:   "rabbit",
-		system: r,
-		setupVault: func(r *rabbit.System, paths vault.Paths, vh vaultHelper.VaultHelper) {
-			vd := rabbit.VaultDetails{}
-			if paths.Rabbit.Details != "" {
-				vd.DetailsPath = paths.Rabbit.Details
-			}
-			if paths.Rabbit.Credentials != "" {
-				vd.CredPath = paths.Rabbit.Credentials
-			}
-			r.Setup(vd, vh)
-		},
-		build: func(r *rabbit.System) error {
-			_, err := r.Build()
-			return err
-		},
-		assign: func(r *rabbit.System) {
-			cfg.Rabbit = *r
-		},
-	})
+	if _, err := r.Build(); err != nil {
+		return logs.Errorf("rabbit: unable to build: %v", err)
+	}
+	if err := fillVault(cfg, "rabbit", cfg.VaultPaths.Rabbit, &r.Details); err != nil {
+		return err
+	}
+	cfg.Rabbit = *r
+	return nil
 }
 
 func Influx(cfg *Config) error {
 	i := influx.NewSystem()
-	return buildSubsystem(cfg, subsystemConfigurator[influx.System]{
-		name:   "influx",
-		system: i,
-		setupVault: func(i *influx.System, paths vault.Paths, vh vaultHelper.VaultHelper) {
-			vd := influx.VaultDetails{}
-			if paths.Influx.Details != "" {
-				vd.DetailsPath = paths.Influx.Details
-			}
-			i.Setup(vd, vh)
-		},
-		build: func(i *influx.System) error {
-			_, err := i.Build()
-			return err
-		},
-		assign: func(i *influx.System) {
-			cfg.Influx = *i
-		},
-	})
+	if _, err := i.Build(); err != nil {
+		return logs.Errorf("influx: unable to build: %v", err)
+	}
+	if err := fillVault(cfg, "influx", cfg.VaultPaths.Influx, &i.Details); err != nil {
+		return err
+	}
+	cfg.Influx = *i
+	return nil
+}
+
+func Redis(cfg *Config) error {
+	r := redis.NewSystem()
+	if _, err := r.Build(); err != nil {
+		return logs.Errorf("redis: unable to build: %v", err)
+	}
+	if err := fillVault(cfg, "redis", cfg.VaultPaths.Redis, &r.Details); err != nil {
+		return err
+	}
+	cfg.Redis = *r
+	return nil
 }
 
 func Clerk(cfg *Config) error {
 	c := clerk.NewSystem()
-	return buildSubsystem(cfg, subsystemConfigurator[clerk.System]{
-		name:   "clerk",
-		system: c,
-		setupVault: func(c *clerk.System, paths vault.Paths, vh vaultHelper.VaultHelper) {
-			vd := c.VaultDetails
-			if paths.Clerk.Details != "" {
-				vd.DetailsPath = paths.Clerk.Details
-			}
-			c.Setup(vd, vh)
-		},
-		build: func(c *clerk.System) error {
-			_, err := c.Build()
-			return err
-		},
-		assign: func(c *clerk.System) {
-			cfg.Clerk = *c
-		},
-	})
+	if _, err := c.Build(); err != nil {
+		return logs.Errorf("clerk: unable to build: %v", err)
+	}
+	if err := fillVault(cfg, "clerk", cfg.VaultPaths.Clerk, &c.Details); err != nil {
+		return err
+	}
+	cfg.Clerk = *c
+	return nil
 }
 
 func Resend(cfg *Config) error {
 	r := resend.NewSystem()
-	return buildSubsystem(cfg, subsystemConfigurator[resend.System]{
-		name:   "resend",
-		system: r,
-		setupVault: func(r *resend.System, paths vault.Paths, vh vaultHelper.VaultHelper) {
-			vd := r.VaultDetails
-			if paths.Resend.Details != "" {
-				vd.DetailsPath = paths.Resend.Details
-			}
-			r.Setup(vd, vh)
-		},
-		build: func(r *resend.System) error {
-			_, err := r.Build()
-			return err
-		},
-		assign: func(r *resend.System) {
-			cfg.Resend = *r
-		},
-	})
+	if _, err := r.Build(); err != nil {
+		return logs.Errorf("resend: unable to build: %v", err)
+	}
+	if err := fillVault(cfg, "resend", cfg.VaultPaths.Resend, &r.Details); err != nil {
+		return err
+	}
+	cfg.Resend = *r
+	return nil
 }
 
 func Bugfixes(cfg *Config) error {
 	b := bugfixes.NewSystem()
-	return buildSubsystem(cfg, subsystemConfigurator[bugfixes.System]{
-		name:   "bugfixes",
-		system: b,
-		setupVault: func(b *bugfixes.System, paths vault.Paths, vh vaultHelper.VaultHelper) {
-			vd := b.VaultDetails
-			if paths.BugFixes.Details != "" {
-				vd.DetailsPath = paths.BugFixes.Details
-			}
-			b.Setup(vd, vh)
-		},
-		build: func(b *bugfixes.System) error {
-			_, err := b.Build()
-			if err != nil {
-				return err
-			}
+	if _, err := b.Build(); err != nil {
+		return logs.Errorf("bugfixes: unable to build: %v", err)
+	}
+	if err := fillVault(cfg, "bugfixes", cfg.VaultPaths.BugFixes, &b.Details); err != nil {
+		return err
+	}
+	if err := b.Validate(); err != nil {
+		return logs.Errorf("bugfixes: unable to build: %v", err)
+	}
 
-			logger := logs.Local()
-			logger.Setup(b.AgentKey, b.AgentSecret)
-			b.Logger = logger
+	logger := logs.Local()
+	logger.Setup(b.AgentKey, b.AgentSecret)
+	b.Logger = logger
 
-			return nil
-		},
-		assign: func(b *bugfixes.System) {
-			cfg.Bugfixes = *b
-		},
-	})
+	cfg.Bugfixes = *b
+	return nil
 }
 
 func Flags(cfg *Config) error {
@@ -302,19 +237,6 @@ func Build(opts ...BuildOption) (*Config, error) {
 	}
 
 	return cfg, nil
-}
-
-func buildSubsystem[T any](cfg *Config, subsystem subsystemConfigurator[T]) error {
-	if cfg.VaultHelper != nil && subsystem.setupVault != nil {
-		subsystem.setupVault(subsystem.system, cfg.VaultPaths, *cfg.VaultHelper)
-	}
-
-	if err := subsystem.build(subsystem.system); err != nil {
-		return logs.Errorf("%s: unable to build: %v", subsystem.name, err)
-	}
-
-	subsystem.assign(subsystem.system)
-	return nil
 }
 
 func BuildLocal(opts ...BuildOption) (*Config, error) {

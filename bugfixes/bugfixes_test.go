@@ -4,7 +4,6 @@ import (
 	"os"
 	"testing"
 
-	vaultHelper "github.com/keloran/vault-helper"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,48 +26,6 @@ func TestBuildGeneric(t *testing.T) {
 	assert.Equal(t, "testKey", bf.AgentKey)
 	assert.Equal(t, "testSecret", bf.AgentSecret)
 	assert.Equal(t, "http://bob.bob", bf.Server)
-}
-
-func TestBuildVault(t *testing.T) {
-	mockVault := &vaultHelper.MockVaultHelper{
-		KVSecrets: []vaultHelper.KVSecret{
-			{Key: "bugfixes-agentid", Value: "testKey"},
-			{Key: "bugfixes-secret", Value: "testSecret"},
-			{Key: "bugfixes-server", Value: "http://bob.bob"},
-		},
-	}
-
-	vd := &vaultHelper.VaultDetails{
-		DetailsPath: "tester",
-	}
-	b := NewSystem()
-	b.Setup(*vd, mockVault)
-	bf, err := b.Build()
-	assert.NoError(t, err)
-	assert.Equal(t, "testKey", bf.AgentKey)
-	assert.Equal(t, "testSecret", bf.AgentSecret)
-	assert.Equal(t, "http://bob.bob", bf.Server)
-}
-
-func TestBuildVaultNoHost(t *testing.T) {
-	os.Clearenv()
-	mockVault := &vaultHelper.MockVaultHelper{
-		KVSecrets: []vaultHelper.KVSecret{
-			{Key: "bugfixes-agentid", Value: "testKey"},
-			{Key: "bugfixes-secret", Value: "testSecret"},
-		},
-	}
-
-	vd := &vaultHelper.VaultDetails{
-		DetailsPath: "tester",
-	}
-	b := NewSystem()
-	b.Setup(*vd, mockVault)
-	bf, err := b.Build()
-	assert.NoError(t, err)
-	assert.Equal(t, "testKey", bf.AgentKey)
-	assert.Equal(t, "testSecret", bf.AgentSecret)
-	assert.Equal(t, "https://api.bugfix.es/v1", bf.Server)
 }
 
 func TestBuildGenericInvalidHost(t *testing.T) {

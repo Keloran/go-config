@@ -2,37 +2,23 @@ package keycloak
 
 import (
 	"context"
-	"strings"
 
 	"github.com/Nerzal/gocloak/v13"
 	"github.com/bugfixes/go-bugfixes/logs"
 	"github.com/caarlos0/env/v8"
-	vaultHelper "github.com/keloran/vault-helper"
 )
 
-type VaultDetails struct {
-	Address string
-	Token   string
-
-	DetailsPath string `env:"KEYCLOAK_VAULT_DETAIL_PATH" envDefault:"secret/data/chewedfeed/details"`
-
-	Exclusive bool
-}
-
 type Details struct {
-	Client string `env:"KEYCLOAK_CLIENT" envDefault:"" json:"client,omitempty"`
-	Secret string `env:"KEYCLOAK_SECRET" envDefault:"" json:"secret,omitempty"`
-	Realm  string `env:"KEYCLOAK_REALM" envDefault:"" json:"realm,omitempty"`
-	Host   string `env:"KEYCLOAK_HOSTNAME" envDefault:"https://keys.chewedfeed.com" json:"host,omitempty"`
+	Client string `env:"KEYCLOAK_CLIENT" envDefault:"" json:"client,omitempty" vault:"keycloak-client"`
+	Secret string `env:"KEYCLOAK_SECRET" envDefault:"" json:"secret,omitempty" vault:"keycloak-secret"`
+	Realm  string `env:"KEYCLOAK_REALM" envDefault:"" json:"realm,omitempty" vault:"keycloak-realm"`
+	Host   string `env:"KEYCLOAK_HOSTNAME" envDefault:"https://keys.chewedfeed.com" json:"host,omitempty" vault:"keycloak-host"`
 }
 
 type System struct {
 	Context context.Context
 
 	Details
-
-	VaultDetails
-	VaultHelper *vaultHelper.VaultHelper
 }
 
 func NewSystem() *System {
@@ -41,84 +27,8 @@ func NewSystem() *System {
 	}
 }
 
-func (s *System) Setup(vd VaultDetails, vh vaultHelper.VaultHelper) {
-	s.VaultDetails = vd
-	s.VaultHelper = &vh
-}
-
 func (s *System) Build() (*Details, error) {
-	gen, err := s.buildGeneric()
-	if err != nil {
-		return nil, err
-	}
-
-	if s.VaultHelper != nil {
-		return s.buildVault()
-	}
-
-	return gen, nil
-}
-
-func isVaultKeyNotFound(err error) bool {
-	return err != nil && strings.Contains(err.Error(), "not found")
-}
-
-func (s *System) buildVault() (*Details, error) {
-	key := &Details{}
-	vh := *s.VaultHelper
-
-	if err := vh.GetSecrets(s.VaultDetails.DetailsPath); err != nil {
-		return key, logs.Errorf("keycloak: unable to get detail secrets: %v", err)
-	}
-	if vh.Secrets() == nil {
-		return key, logs.Error("keycloak: unable to find secrets")
-	}
-
-	if s.Details.Client == "" {
-		secret, err := vh.GetSecret("keycloak-client")
-		if err != nil {
-			return key, logs.Errorf("keycloak: unable to get client id: %v", err)
-		}
-		key.Client = secret
-	} else {
-		key.Client = s.Details.Client
-	}
-
-	if s.Details.Secret == "" {
-		secret, err := vh.GetSecret("keycloak-secret")
-		if err != nil {
-			return key, logs.Errorf("keycloak: unable to get secret: %v", err)
-		}
-		key.Secret = secret
-	} else {
-		key.Secret = s.Details.Secret
-	}
-
-	if s.Details.Realm == "" {
-		secret, err := vh.GetSecret("keycloak-realm")
-		if err != nil {
-			return key, logs.Errorf("keycloak: unable to get realm: %v", err)
-		}
-		key.Realm = secret
-	} else {
-		key.Realm = s.Details.Realm
-	}
-
-	if s.Details.Host == "" {
-		secret, err := vh.GetSecret("keycloak-host")
-		if err != nil {
-			if !isVaultKeyNotFound(err) {
-				return key, logs.Errorf("keycloak: unable to get host: %v", err)
-			}
-			secret = "https://keys.chewedfeed.com"
-		}
-		key.Host = secret
-	} else {
-		key.Host = s.Details.Host
-	}
-
-	s.Details = *key
-	return key, nil
+	return s.buildGeneric()
 }
 
 func (s *System) buildGeneric() (*Details, error) {

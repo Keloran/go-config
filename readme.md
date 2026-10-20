@@ -81,3 +81,13 @@ func main() {
 ```
 
 `GetProjectConfig[T]` expects `cfg.ProjectConfig` to be stored as `*T`.
+
+## Vault (optional)
+
+Every subsystem builds from env alone. Add `config.Vault` (or use `NewConfig(vh)` / `BuildLocalVH`) to also pull secrets from Vault:
+
+```go
+cfg, err := config.Build(config.Vault, config.Redis)
+```
+
+Vault only fills fields tagged `vault:"key"` whose env var isn't set and that still hold their default; keys missing from Vault are skipped. Paths come from `cfg.VaultPaths` (details default `secret/data/chewedfeed/details`).

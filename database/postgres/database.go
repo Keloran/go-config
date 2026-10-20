@@ -12,24 +12,14 @@ import (
 	"github.com/caarlos0/env/v8"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	vaultHelper "github.com/keloran/vault-helper"
 )
 
-const vaultRefreshBuffer = 3600
-
-type VaultDetails struct {
-	CredPath    string `env:"RDS_VAULT_CRED_PATH" envDefault:"secret/data/chewedfeed/postgres"`
-	DetailsPath string `env:"RDS_VAULT_DETAIL_PATH" envDefault:"secret/data/chewedfeed/details"`
-
-	ExpireTime time.Time
-}
-
 type Details struct {
-	Host              string        `env:"RDS_HOSTNAME" envDefault:"postgres.chewedfeed"`
-	Port              int           `env:"RDS_PORT" envDefault:"5432"`
-	User              string        `env:"RDS_USERNAME"`
-	Password          string        `env:"RDS_PASSWORD"`
-	DBName            string        `env:"RDS_DB" envDefault:"postgres"`
+	Host              string        `env:"RDS_HOSTNAME" envDefault:"postgres.chewedfeed" vault:"rds-hostname"`
+	Port              int           `env:"RDS_PORT" envDefault:"5432" vault:"rds-port"`
+	User              string        `env:"RDS_USERNAME" vault:"username,creds"`
+	Password          string        `env:"RDS_PASSWORD" vault:"password,creds"`
+	DBName            string        `env:"RDS_DB" envDefault:"postgres" vault:"rds-db"`
 	RawURL            string        `env:"RDS_URL"`
 	ConnectionTimeout time.Duration `env:"RDS_CONNECTION_TIMEOUT" envDefault:"10s"`
 	ExtraParams       string
@@ -39,9 +29,6 @@ type System struct {
 	Context context.Context
 
 	Details
-
-	VaultDetails
-	VaultHelper *vaultHelper.VaultHelper
 }
 
 func NewSystem() *System {
@@ -50,22 +37,8 @@ func NewSystem() *System {
 	}
 }
 
-func (s *System) Setup(vd VaultDetails, vh vaultHelper.VaultHelper) {
-	s.VaultDetails = vd
-	s.VaultHelper = &vh
-}
-
 func (s *System) Build() (*Details, error) {
-	gen, err := s.buildGeneric()
-	if err != nil {
-		return nil, err
-	}
-
-	if s.VaultHelper != nil {
-		return s.buildVault()
-	}
-
-	return gen, nil
+	return s.buildGeneric()
 }
 
 func (s *System) buildGeneric() (*Details, error) {
@@ -85,113 +58,7 @@ func (s *System) buildGeneric() (*Details, error) {
 	return rds, nil
 }
 
-func isVaultKeyNotFound(err error) bool {
-	return err != nil && strings.Contains(err.Error(), "not found")
-}
-
-func (s *System) buildVault() (*Details, error) {
-	rds := &Details{}
-	vh := *s.VaultHelper
-
-	// Get Credentials
-	if err := vh.GetSecrets(s.VaultDetails.CredPath); err != nil {
-		return rds, logs.Errorf("postgres: unable to get credential secrets: %v", err)
-	}
-	if vh.Secrets() == nil {
-		return rds, logs.Error("postgres: unable to find credential secrets")
-	}
-
-	if s.Details.User == "" {
-		secret, err := vh.GetSecret("username")
-		if err != nil {
-			return nil, logs.Errorf("postgres: unable to get username: %v", err)
-		}
-		rds.User = secret
-	} else {
-		rds.User = s.Details.User
-	}
-
-	if s.Details.Password == "" {
-		secret, err := vh.GetSecret("password")
-		if err != nil {
-			return nil, logs.Errorf("postgres: unable to get password: %v", err)
-		}
-		rds.Password = secret
-	} else {
-		rds.Password = s.Details.Password
-	}
-
-	// Get Details
-	if err := vh.GetSecrets(s.VaultDetails.DetailsPath); err != nil {
-		return rds, logs.Errorf("postgres: unable to get detail secrets: %v", err)
-	}
-	if vh.Secrets() == nil {
-		return rds, logs.Error("postgres: unable to find detail secrets")
-	}
-
-	// get the port based on the username, since port has a default in env
-	if s.Details.User == "" && s.Details.Port == 5432 {
-		secret, err := vh.GetSecret("rds-port")
-		if err != nil {
-			if !isVaultKeyNotFound(err) {
-				return nil, logs.Errorf("postgres: unable to get port: %v", err)
-			}
-			secret = "5432"
-		}
-		if secret != "" {
-			iport, err := strconv.Atoi(secret)
-			if err != nil {
-				return nil, logs.Errorf("postgres: unable to parse port: %v", err)
-			}
-			rds.Port = iport
-		}
-	} else {
-		rds.Port = s.Details.Port
-	}
-
-	// get the db based on the username, since db has a default in env
-	if s.Details.User == "" {
-		secret, err := vh.GetSecret("rds-db")
-		if err != nil {
-			if !isVaultKeyNotFound(err) {
-				return nil, logs.Errorf("postgres: unable to get database: %v", err)
-			}
-			secret = "postgres"
-		}
-		rds.DBName = secret
-	} else {
-		rds.DBName = s.Details.DBName
-	}
-
-	// get the host based on the username, since host has a default in env
-	if s.Details.User == "" {
-		secret, err := vh.GetSecret("rds-hostname")
-		if err != nil {
-			if !isVaultKeyNotFound(err) {
-				return nil, logs.Errorf("postgres: unable to get hostname: %v", err)
-			}
-			secret = "db.chewed-k8s.net"
-		}
-		rds.Host = secret
-	} else {
-		rds.Host = s.Details.Host
-	}
-
-	s.ExpireTime = time.Now().Add(time.Duration(vh.LeaseDuration()) * time.Second)
-	s.Details = *rds
-
-	return rds, nil
-}
-
 func (s *System) GetPGXClient(ctx context.Context) (*pgx.Conn, error) {
-	if s.VaultHelper != nil && time.Now().Unix() > (s.VaultDetails.ExpireTime.Unix()-vaultRefreshBuffer) {
-		logs.Infof("vault expired, rebuilding, new expire time is %v", s.VaultDetails.ExpireTime)
-
-		if _, err := s.buildVault(); err != nil {
-			return nil, logs.Errorf("postgres: unable to rebuild vault config: %v", err)
-		}
-	}
-
 	timeoutContext, cancel := context.WithTimeout(ctx, s.Details.ConnectionTimeout)
 	defer cancel()
 
@@ -207,14 +74,6 @@ func (s *System) GetPGXClient(ctx context.Context) (*pgx.Conn, error) {
 }
 
 func (s *System) GetPGXPoolClient(ctx context.Context) (*pgxpool.Pool, error) {
-	if s.VaultHelper != nil && time.Now().Unix() > (s.VaultDetails.ExpireTime.Unix()-vaultRefreshBuffer) {
-		logs.Infof("vault expired, rebuilding, new expire time is %v", s.VaultDetails.ExpireTime)
-
-		if _, err := s.buildVault(); err != nil {
-			return nil, logs.Errorf("postgres: unable to rebuild vault config: %v", err)
-		}
-	}
-
 	timeoutContext, cancel := context.WithTimeout(ctx, s.Details.ConnectionTimeout)
 	defer cancel()
 

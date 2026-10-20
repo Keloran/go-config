@@ -1,7 +1,6 @@
 package clerk
 
 import (
-	vaultHelper "github.com/keloran/vault-helper"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
@@ -22,61 +21,4 @@ func TestBuildGeneric(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "testKey", ck.Key)
 	assert.Equal(t, "testPublicKey", ck.PublicKey)
-}
-
-func TestBuildVault(t *testing.T) {
-	mockVault := &vaultHelper.MockVaultHelper{
-		KVSecrets: []vaultHelper.KVSecret{
-			{Key: "clerk-key", Value: "testKey"},
-			{Key: "clerk-public-key", Value: "testPublicKey"},
-		},
-	}
-
-	vd := &vaultHelper.VaultDetails{
-		DetailsPath: "tester",
-	}
-	c := NewSystem()
-	c.Setup(*vd, mockVault)
-	ck, err := c.Build()
-	assert.NoError(t, err)
-	assert.Equal(t, "testKey", ck.Key)
-	assert.Equal(t, "testPublicKey", ck.PublicKey)
-}
-
-func TestBuildVaultNoKey(t *testing.T) {
-	mockVault := &vaultHelper.MockVaultHelper{
-		KVSecrets: []vaultHelper.KVSecret{
-			{Key: "clerk-key", Value: "testKey"},
-			{Key: "clerk-public-key", Value: "testPublicKey"},
-		},
-	}
-
-	vd := &vaultHelper.VaultDetails{
-		DetailsPath: "tester",
-	}
-	c := NewSystem()
-	c.Setup(*vd, mockVault)
-	ck, err := c.Build()
-	assert.NoError(t, err)
-	assert.Equal(t, "testKey", ck.Key)
-	assert.Equal(t, "testPublicKey", ck.PublicKey)
-}
-
-func TestBuildVaultNoPublicKey(t *testing.T) {
-	os.Clearenv()
-	mockVault := &vaultHelper.MockVaultHelper{
-		KVSecrets: []vaultHelper.KVSecret{
-			{Key: "clerk-key", Value: "testKey"},
-		},
-	}
-
-	vd := &vaultHelper.VaultDetails{
-		DetailsPath: "tester",
-	}
-	c := NewSystem()
-	c.Setup(*vd, mockVault)
-	ck, err := c.Build()
-	assert.NoError(t, err)
-	assert.Equal(t, "testKey", ck.Key)
-	assert.Equal(t, "", ck.PublicKey)
 }
