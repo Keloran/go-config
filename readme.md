@@ -12,7 +12,7 @@ package main
 import (
 	"fmt"
 
-	config "github.com/keloran/go-config"
+	config "github.com/keloran/go-config/v2"
 )
 
 func main() {
@@ -36,7 +36,7 @@ package main
 import (
 	"fmt"
 
-	config "github.com/keloran/go-config"
+	config "github.com/keloran/go-config/v2"
 )
 
 type AppConfig struct {

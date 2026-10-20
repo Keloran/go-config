@@ -1,4 +1,4 @@
-module github.com/keloran/go-config
+module github.com/keloran/go-config/v2
 
 go 1.26.1
 
