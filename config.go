@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 
+	bugfixesSDK "github.com/bugfixes/go-bugfixes"
 	"github.com/bugfixes/go-bugfixes/logs"
 	"github.com/joho/godotenv"
 	"github.com/keloran/go-config/v2/auth/keycloak"
@@ -232,6 +233,7 @@ func Bugfixes(cfg *Config) error {
 
 	logger := logs.Local()
 	logger.Setup(b.AgentKey, b.AgentSecret)
+	logger.SetConfig(bugfixesSDK.Config{Server: b.Server, Service: b.Service})
 	b.Logger = logger
 
 	cfg.Bugfixes = *b
