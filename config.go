@@ -16,6 +16,7 @@ import (
 	"github.com/keloran/go-config/v2/database/postgres"
 	"github.com/keloran/go-config/v2/influx"
 	"github.com/keloran/go-config/v2/local"
+	"github.com/keloran/go-config/v2/onepassword"
 	"github.com/keloran/go-config/v2/rabbit"
 	"github.com/keloran/go-config/v2/redis"
 	"github.com/keloran/go-config/v2/vault"
@@ -47,6 +48,23 @@ type Config struct {
 }
 
 type BuildOption func(*Config) error
+
+// OnePassword loads unset environment variables from 1Password before later
+// BuildOptions run. fields maps "item.field" (or an op:// reference) to an
+// environment variable name. Without OP_SERVICE_ACCOUNT_TOKEN it is a no-op.
+func OnePassword(vaultName string, fields map[string]string) BuildOption {
+	return func(*Config) error {
+		return onepassword.Load(vaultName, fields)
+	}
+}
+
+// OnePasswordRequired is like OnePassword, but fails when
+// OP_SERVICE_ACCOUNT_TOKEN is missing.
+func OnePasswordRequired(vaultName string, fields map[string]string) BuildOption {
+	return func(*Config) error {
+		return onepassword.LoadRequired(vaultName, fields)
+	}
+}
 
 func NewConfig(vh vaultHelper.VaultHelper) *Config {
 	return &Config{
