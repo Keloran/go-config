@@ -517,3 +517,11 @@ func writeTestFile(t *testing.T, path string, content string) {
 	t.Helper()
 	require.NoError(t, os.WriteFile(path, []byte(content), 0o600))
 }
+
+func TestOnePasswordBuildOptionsWithoutToken(t *testing.T) {
+	t.Setenv("OP_SERVICE_ACCOUNT_TOKEN", "")
+	cfg := NewConfigNoVault()
+
+	assert.NoError(t, OnePassword("prod", map[string]string{"database.password": "RDS_PASSWORD"})(cfg))
+	assert.ErrorContains(t, OnePasswordRequired("prod", nil)(cfg), "OP_SERVICE_ACCOUNT_TOKEN")
+}

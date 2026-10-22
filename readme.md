@@ -82,6 +82,25 @@ func main() {
 
 `GetProjectConfig[T]` expects `cfg.ProjectConfig` to be stored as `*T`.
 
+## 1Password service account (optional)
+
+Place `config.OnePassword` before subsystem options so it loads secrets into the environment before those subsystems parse their configuration:
+
+```go
+cfg, err := config.Build(
+	config.OnePassword("prod", map[string]string{
+		"postgres.password":                      "RDS_PASSWORD",
+		"bugfixes_frontend_credentials.username": "BUGFIXES_AGENT_KEY",
+	}),
+	config.Postgres,
+	config.Bugfixes,
+)
+```
+
+Set `OP_SERVICE_ACCOUNT_TOKEN` for the service account. Each map key is `item.field` and each value is the environment variable to set. Item names may contain dots; the last dot separates the field. Keys beginning with `op://` are passed directly to the SDK. Existing environment variables, including values loaded from `.env`, take precedence. With no token, `OnePassword` does nothing; use `OnePasswordRequired` when startup must fail if the token is missing. A lookup failure stops config building and reports the reference without logging the secret value.
+
+The 1Password Go SDK embeds its runtime in the application binary. Measure binary size and startup time in the consuming service before rolling it out broadly.
+
 ## Vault (optional)
 
 Every subsystem builds from env alone. Add `config.Vault` (or use `NewConfig(vh)` / `BuildLocalVH`) to also pull secrets from Vault:
