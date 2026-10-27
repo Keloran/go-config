@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/assert"
 	tpg "github.com/testcontainers/testcontainers-go/modules/postgres"
 )
@@ -79,6 +81,44 @@ func TestPostgresPoolConnection(t *testing.T) {
 		}
 	}()
 	assert.NotNil(t, pool)
+}
+
+// options change the pool after go-config's defaults: a PrepareConn hook sees the caller's context
+func TestPGXPoolClientOptions(t *testing.T) {
+	ctx := context.Background()
+	pg, err := setupPostgres(ctx)
+	assert.NoError(t, err)
+	defer func() {
+		if pg != nil {
+			_ = pg.Terminate(ctx)
+		}
+	}()
+	connectionString, err := pg.ConnectionString(ctx, "sslmode=disable")
+	assert.NoError(t, err)
+	sys := NewSystem()
+	if err := sys.ParseConnectionString(connectionString); err != nil {
+		t.Fatal(err)
+	}
+	sys.Details.ConnectionTimeout = 30 * time.Second
+	assert.NoError(t, waitForPostgresConnection(ctx, sys, 30*time.Second))
+
+	type who struct{}
+	pool, err := sys.GetPGXPoolClient(ctx, func(c *pgxpool.Config) {
+		c.MaxConns = 3
+		c.PrepareConn = func(ctx context.Context, conn *pgx.Conn) (bool, error) {
+			name, _ := ctx.Value(who{}).(string)
+			_, err := conn.Exec(ctx, `SELECT set_config('app.who', $1, false)`, name)
+			return err == nil, err
+		}
+	})
+	assert.NoError(t, err)
+	defer pool.Close()
+	assert.Equal(t, int32(3), pool.Config().MaxConns)
+	var got string
+	assert.NoError(t, pool.QueryRow(context.WithValue(ctx, who{}, "ava"), `SELECT current_setting('app.who')`).Scan(&got))
+	assert.Equal(t, "ava", got)
+	assert.NoError(t, pool.QueryRow(context.WithValue(ctx, who{}, "sam"), `SELECT current_setting('app.who')`).Scan(&got))
+	assert.Equal(t, "sam", got)
 }
 
 func TestPostgresConnection(t *testing.T) {
