@@ -12,6 +12,7 @@ type Details struct {
 	Server      string `env:"BUGFIXES_SERVER" envDefault:"https://api.bugfix.es/v1" vault:"bugfixes-server"`
 	AgentKey    string `env:"BUGFIXES_AGENT_KEY" vault:"bugfixes-agentid"`
 	AgentSecret string `env:"BUGFIXES_AGENT_SECRET" vault:"bugfixes-secret"`
+	Service     string `env:"BUGFIXES_SERVICE" vault:"bugfixes-service"`
 }
 
 type System struct {

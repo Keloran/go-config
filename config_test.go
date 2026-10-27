@@ -307,6 +307,7 @@ func TestBugfixes(t *testing.T) {
 		KVSecrets: []vaulthelper.KVSecret{
 			{Key: "bugfixes-agentid", Value: "testKey"},
 			{Key: "bugfixes-secret", Value: "testSecret"},
+			{Key: "bugfixes-service", Value: "testService"},
 		},
 	}
 
@@ -315,6 +316,8 @@ func TestBugfixes(t *testing.T) {
 	assert.NotNil(t, cfg.Bugfixes.Logger)
 	assert.Equal(t, "testKey", cfg.Bugfixes.Logger.AgentID)
 	assert.Equal(t, "testSecret", cfg.Bugfixes.Logger.Secret)
+	assert.Equal(t, "testService", cfg.Bugfixes.Service)
+	assert.Equal(t, "testService", cfg.Bugfixes.Logger.Config.Service)
 }
 
 func TestFlags(t *testing.T) {

@@ -19,6 +19,9 @@ func TestBuildGeneric(t *testing.T) {
 	if err := os.Setenv("BUGFIXES_SERVER", "http://bob.bob"); err != nil {
 		t.Fatal(err)
 	}
+	if err := os.Setenv("BUGFIXES_SERVICE", "testService"); err != nil {
+		t.Fatal(err)
+	}
 
 	b := NewSystem()
 	bf, err := b.Build()
@@ -26,6 +29,7 @@ func TestBuildGeneric(t *testing.T) {
 	assert.Equal(t, "testKey", bf.AgentKey)
 	assert.Equal(t, "testSecret", bf.AgentSecret)
 	assert.Equal(t, "http://bob.bob", bf.Server)
+	assert.Equal(t, "testService", bf.Service)
 }
 
 func TestBuildGenericInvalidHost(t *testing.T) {
