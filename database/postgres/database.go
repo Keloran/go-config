@@ -73,7 +73,10 @@ func (s *System) GetPGXClient(ctx context.Context) (*pgx.Conn, error) {
 	return client, nil
 }
 
-func (s *System) GetPGXPoolClient(ctx context.Context) (*pgxpool.Pool, error) {
+// GetPGXPoolClient opens a pool to the database. Each opt can change the pool's config after go-config's
+// defaults (MaxConns 10, idle timeout = ConnectionTimeout) and before the pool opens: pgx's hooks, such as
+// PrepareConn to set a session setting from the request's context, or different limits.
+func (s *System) GetPGXPoolClient(ctx context.Context, opts ...func(*pgxpool.Config)) (*pgxpool.Pool, error) {
 	timeoutContext, cancel := context.WithTimeout(ctx, s.Details.ConnectionTimeout)
 	defer cancel()
 
@@ -86,6 +89,9 @@ func (s *System) GetPGXPoolClient(ctx context.Context) (*pgxpool.Pool, error) {
 	}
 	config.MaxConns = 10
 	config.MaxConnIdleTime = s.Details.ConnectionTimeout
+	for _, opt := range opts {
+		opt(config)
+	}
 
 	client, err := pgxpool.NewWithConfig(timeoutContext, config)
 	if err != nil {
