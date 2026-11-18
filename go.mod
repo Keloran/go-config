@@ -10,7 +10,7 @@ require (
 	github.com/jackc/pgx/v5 v5.13.0
 	github.com/joho/godotenv v1.5.1
 	github.com/keloran/vault-helper v1.1.0
-	github.com/stillya/testcontainers-keycloak v0.3.8
+	github.com/stillya/testcontainers-keycloak v0.3.9
 	github.com/stretchr/testify v1.12.1
 	github.com/testcontainers/testcontainers-go v0.45.0
 	github.com/testcontainers/testcontainers-go/modules/mongodb v0.45.0
