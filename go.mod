@@ -5,7 +5,7 @@ go 1.26.1
 require (
 	github.com/1password/onepassword-sdk-go v0.4.1
 	github.com/Nerzal/gocloak/v13 v13.9.0
-	github.com/bugfixes/go-bugfixes v0.19.5
+	github.com/bugfixes/go-bugfixes v0.19.6
 	github.com/caarlos0/env/v8 v8.0.0
 	github.com/jackc/pgx/v5 v5.13.0
 	github.com/joho/godotenv v1.5.1
